@@ -1,0 +1,20 @@
+Compress:
+tar czvf file_name.tar.gz file_list_to_compress
+
+Extract:
+tar xzvf file_name.tar.gz
+
+OR (if not supported)
+
+Compress:
+tar cvf file.tar files_to_unify
+and then
+gzip file.tar
+
+Extract:
+gunzip file.tar.gz
+and then
+tar xvf file.tar
+
+bochs with gdb: 	make gdb
+bochs without gdb:	make emulgdb
