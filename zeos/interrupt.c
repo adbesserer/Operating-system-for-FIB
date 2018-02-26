@@ -28,6 +28,7 @@ char char_map[] =
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0'
 };
+void keyboard_handler();
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
@@ -73,7 +74,6 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   idt[vector].highOffset      = highWord((DWord)handler);
 }
 
-
 void setIdt()
 {
   /* Program interrups/exception service routines */
@@ -83,7 +83,22 @@ void setIdt()
   set_handlers();
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
+  setInterruptHandler(33, keyboard_handler, 0);
 
   set_idt_reg(&idtR);
 }
 
+void keyboard_routine()
+{
+	unsigned char c, mask;
+	c = inb(0x60);
+	mask = 0x80;
+	if (c & mask){ 	//MAKE 
+		c = char_map[(~mask & c)];	//translate last 7 bits of character with table 
+		if(c == '\0')				//if it's a special key we print a capital C
+			printc_xy(0,0,'C'); 		
+		else						//else we print the ascii representation of the key
+			printc_xy(0,0,c);
+	}
+	//ELSE it's a BREAK (lift key)
+}
