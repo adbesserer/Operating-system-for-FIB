@@ -42,6 +42,28 @@ int sys_fork()
   return PID;
 }
 
+int sys_write(int fd,char* buffer,int size){
+//fd: file descriptor. In this delivery it must always be 1.
+//buffer: pointer to the bytes.
+//size: number of bytes.
+//return ’ Negative number in case of error (specifying the kind of error) and
+//the number of bytes written if OK.
+	//check parameters 1. fd
+	int tmp;
+	tmp = check_fd(fd, ESCRIPTURA);
+	if(tmp < 0) return tmp;
+	//2. buffer
+	if(buffer == NULL) return -22;
+	//3. size
+	if(size < 0) return -22;
+
+	// copy data to/from user address space (data must be brought into system space)
+	char sysBuffer [size];
+	copy_from_user(buffer, sysBuffer, size);
+	//implement requested service
+	return sys_write_console(sysBuffer, size);
+
+}
 void sys_exit()
 {  
 }

@@ -4,6 +4,7 @@
 
 #include <asm.h>
 #include <segment.h>
+#include <errno.h>
 
 
 /**************************************************/
@@ -52,7 +53,7 @@
     movl %edx, %es
 
 #define RESTORE_ALL \
-    popl %ebx; \	
+	popl %ebx; \
 	popl %ecx; \
 	popl %edx; \
 	popl %esi; \
@@ -70,7 +71,27 @@
 
 ENTRY(keyboard_handler)
 	SAVE_ALL
+	EOI
 	call keyboard_routine
+	RESTORE_ALL
+	/*clear error*/
+	iret
+
+ENTRY(system_call_handler)
+	SAVE_ALL
+	/*check that it is a correct syscall num.*/
+	cmpl $0, %eax
+	jl err
+	cmpl $MAX_SYSCALL, %eax
+	jg err
+	/*call system routine*/
+	call *sys_call_table(, %eax, 0x04);
+	jmp fin
+
+err:
+	movl $-ENOSYS, %eax
+fin:
+	movl %eax, 0x18(%esp)
 	RESTORE_ALL
 	/*clear error*/
 	iret
