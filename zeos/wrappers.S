@@ -40,7 +40,7 @@ ENTRY(write)
   jge  finWr
   /*save absolute value of error in errno*/
   movl $0, %edx
-  subl %edx, %eax
+  subl %eax, %edx
   movl %edx, errno
   /*put -1 in eax*/
   movl $-1, %eax
