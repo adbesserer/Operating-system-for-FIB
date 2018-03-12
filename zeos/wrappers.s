@@ -26,12 +26,31 @@
   popl %ebp
 
   cmpl $0, %eax
-  jge fin
+  jge finWr
 
   movl $0, %edx
   subl %edx, %eax
   movl %edx, errno
 
   movl $-1, %eax
-fin:
+finWr:
   ret
+
+.globl gettime; .type gettime, @function; .align 0; gettime:
+ pushl %ebp
+  movl %esp, %ebp
+
+   movl $10, %eax
+
+   int $0x80
+
+   cmpl $0, %eax
+   jge finGt
+
+   movl $0, %edx
+   subl %edx, %eax
+   movl %edx, errno
+
+   movl $-1, %eax
+finGt:
+   ret

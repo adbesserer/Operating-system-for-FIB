@@ -23,6 +23,14 @@
 
  iret
 
+.globl clock_handler; .type clock_handler, @function; .align 0; clock_handler:
+ pushl %gs; pushl %fs; pushl %es; pushl %ds; pushl %eax; pushl %ebp; pushl %edi; pushl %esi; pushl %edx; pushl %ecx; pushl %ebx; movl $0x18, %edx; movl %edx, %ds; movl %edx, %es
+ movb $0x20, %al; outb %al, $0x20
+ call clock_routine
+ popl %ebx; popl %ecx; popl %edx; popl %esi; popl %edi; popl %ebp; popl %eax; popl %ds; popl %es; popl %fs; popl %gs
+
+ iret
+
 .globl system_call_handler; .type system_call_handler, @function; .align 0; system_call_handler:
  pushl %gs; pushl %fs; pushl %es; pushl %ds; pushl %eax; pushl %ebp; pushl %edi; pushl %esi; pushl %edx; pushl %ecx; pushl %ebx; movl $0x18, %edx; movl %edx, %ds; movl %edx, %es
 

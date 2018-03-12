@@ -13,8 +13,12 @@
 
 #include <sched.h>
 
+#include <errno.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
+
+extern int zeos_ticks;
 
 int check_fd(int fd, int permissions)
 {
@@ -53,9 +57,9 @@ int sys_write(int fd,char* buffer,int size){
 	tmp = check_fd(fd, ESCRIPTURA);
 	if(tmp < 0) return tmp;
 	//2. buffer
-	if(buffer == NULL) return -22;
+	if(buffer == NULL) return -EINVAL; //
 	//3. size
-	if(size < 0) return -22;
+	if(size < 0) return -EINVAL; //
 
 	// copy data to/from user address space (data must be brought into system space)
 	char sysBuffer [size];
@@ -63,6 +67,9 @@ int sys_write(int fd,char* buffer,int size){
 	//implement requested service
 	return sys_write_console(sysBuffer, size);
 
+}
+int sys_gettime(){
+	return zeos_ticks;
 }
 void sys_exit()
 {  

@@ -12,6 +12,12 @@ int __attribute__ ((__section__(".text.main")))
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 	char buffer [5] = "Hola";
 	write(1,buffer,5);
-  	while(1) { };
+	perror();
+	char t[20];
+  	while(1) { 
+  		itoa(gettime(),t);
+  		write(1, t, strlen(t));
+  		perror();
+  	};
   	return 0;
 }

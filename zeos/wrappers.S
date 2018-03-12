@@ -37,14 +37,31 @@ ENTRY(write)
   popl %ebp
   /*manage error/result*/
   cmpl $0, %eax
-  jge  fin
+  jge  finWr
   /*save absolute value of error in errno*/
   movl $0, %edx
   subl %edx, %eax
   movl %edx, errno
   /*put -1 in eax*/
   movl $-1, %eax
-fin:
+finWr:
   ret
 
-  
+ENTRY(gettime)
+	pushl %ebp
+ 	movl  %esp, %ebp
+  	/*identifier of system call in eax*/
+  	movl $10, %eax
+  	/*generate interrupt*/
+  	int $0x80
+  	/*manage error/result*/
+  	cmpl $0, %eax
+  	jge  finGt
+  	/*save absolute value of error in errno*/
+  	movl $0, %edx
+  	subl %edx, %eax
+  	movl %edx, errno
+  	/*put -1 in eax*/
+  	movl $-1, %eax
+finGt:
+  	ret

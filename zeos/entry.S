@@ -77,6 +77,14 @@ ENTRY(keyboard_handler)
 	/*clear error*/
 	iret
 
+ENTRY(clock_handler)
+	SAVE_ALL
+	EOI
+	call clock_routine
+	RESTORE_ALL
+	/*clear error*/
+	iret
+
 ENTRY(system_call_handler)
 	SAVE_ALL
 	/*check that it is a correct syscall num.*/

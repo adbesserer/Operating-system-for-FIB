@@ -18,3 +18,7 @@ tar xvf file.tar
 
 bochs with gdb: 	make gdb
 bochs without gdb:	make emulgdb
+
+GDB things: 
+	-tui enable (user interface)
+	-ctrl x + 2 (see assembly) 
