@@ -57,16 +57,20 @@ int sys_write(int fd,char* buffer,int size){
 	tmp = check_fd(fd, ESCRIPTURA);
 	if(tmp < 0) return tmp;
 	//2. buffer
-	if(buffer == NULL) return -EINVAL; //
+	if(buffer == NULL) return -EFAULT; //
 	//3. size
 	if(size < 0) return -EINVAL; //
 
 	// copy data to/from user address space (data must be brought into system space)
-	char sysBuffer [size];
-	copy_from_user(buffer, sysBuffer, size);
-	//implement requested service
-	return sys_write_console(sysBuffer, size);
-
+	char sysBuffer [2048];
+	int i,ret;
+	ret=0;
+	for (i=0; i < size; i+=2048){
+		copy_from_user(&buffer[i], sysBuffer, min(2048,size-i));
+		//implement requested service
+		ret+=sys_write_console(sysBuffer, min(2048,size-i));
+	}
+	return ret;
 }
 int sys_gettime(){
 	return zeos_ticks;
