@@ -54,6 +54,8 @@ ENTRY(gettime)
   	movl $10, %eax
   	/*generate interrupt*/
   	int $0x80
+  	 /*restore context*/
+  	popl %ebp
   	/*manage error/result*/
   	cmpl $0, %eax
   	jge  finGt

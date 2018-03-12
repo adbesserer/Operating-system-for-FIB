@@ -13,11 +13,14 @@ int __attribute__ ((__section__(".text.main")))
 	char buffer [5] = "Hola";
 	write(1,buffer,5);
 	perror();
+	//test gettime
 	char t[20];
+	int i;
+	itoa(gettime(),t);
+  	write(1, t, strlen(t));
+  	perror();
   	while(1) { 
-  		itoa(gettime(),t);
-  		write(1, t, strlen(t));
-  		perror();
+
   	};
   	return 0;
 }

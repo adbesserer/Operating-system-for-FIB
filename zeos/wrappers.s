@@ -44,6 +44,8 @@ finWr:
 
    int $0x80
 
+   popl %ebp
+
    cmpl $0, %eax
    jge finGt
 
