@@ -1,5 +1,5 @@
 /*
- * system.c - 
+ * system.c - system initialization
  */
 
 #include <segment.h>
@@ -13,7 +13,12 @@
 #include <utils.h>
 #include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
+// Global gettime ()
 int zeos_ticks;
+struct list_head freequeue;
+struct list_head readyqueue;
+struct task_struct * idle_task;
+struct task_struct * task1;
 
 int (*usr_main)(void) = (void *) PH_USER_START;
 unsigned int *p_sys_size = (unsigned int *) KERNEL_START;
@@ -71,7 +76,7 @@ int __attribute__((__section__(".text.main")))
   set_seg_regs(__KERNEL_DS, __KERNEL_DS, (DWord) &protected_tasks[5]);
 
   /*** DO *NOT* ADD ANY CODE IN THIS ROUTINE BEFORE THIS POINT ***/
-  zeos_ticks = 0;
+
   printk("Kernel Loaded!    ");
 
 
@@ -85,7 +90,7 @@ int __attribute__((__section__(".text.main")))
 
 /* Initialize an address space to be used for the monoprocess version of ZeOS */
 
-  monoprocess_init_addr_space(); /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
+  //monoprocess_init_addr_space(); /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
   /* Initialize Scheduling */
   init_sched();
@@ -94,13 +99,13 @@ int __attribute__((__section__(".text.main")))
   init_idle();
   /* Initialize task 1 data */
   init_task1();
-
+  
   /* Move user code/data now (after the page table initialization) */
   copy_data((void *) KERNEL_START + *p_sys_size, usr_main, *p_usr_size);
 
 
   printk("Entering user mode...");
-
+  zeos_ticks = 0;
   enable_int();
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges

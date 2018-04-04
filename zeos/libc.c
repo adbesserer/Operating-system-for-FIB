@@ -1,12 +1,12 @@
 /*
- * libc.c 
+ * libc.c SYSTEM CALL WRAPPERS
  */
 
 #include <libc.h>
-#include <errno.h>
 #include <types.h>
+#include <errno.h>
 
-int errno = 0;
+int errno;
 
 void itoa(int a, char *b)
 {
@@ -43,23 +43,26 @@ int strlen(char *a)
   return i;
 }
 
-void perror(){
-	switch(errno){
-		case 0:
+void perror()
+{
+	switch(errno) {
+		case 9:
+			write (1, "Bad file number\n", 16);
 			break;
-		case EBADF:
-			write(1,"Bad file number\n",17);
+		case 13:
+			write (1, "Permission denied\n", 18);
 			break;
-		case ENOSYS:
-			write(1,"Function not implemented\n",26);
+		case 14:
+			write (1, "Bad address\n", 12);
 			break;
-		case EINVAL:
-			write(1,"Invalid argument\n",18);
-			break;	
-		case EACCES:
-			write(1,"Permission denied\n",19);
+		case 22:
+			write (1, "Invalid argument\n", 17);
 			break;
-		default:
-			write(1,"Unspecified error\n",19);
+		case 38:
+			write (1, "Function not implemented\n",25);
+			break;
+		default: 
+			write (1, "Error not defined\n",18);
+			break;
 	}
 }

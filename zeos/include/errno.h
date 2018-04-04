@@ -5,7 +5,7 @@
 #define ENOENT       2  /* No such file or directory */
 #define ESRCH        3  /* No such process */
 #define EINTR        4  /* Interrupted system call */
-#define EIO      	 5  /* I/O error */
+#define EIO      5  /* I/O error */
 #define ENXIO        6  /* No such device or address */
 #define E2BIG        7  /* Argument list too long */
 #define ENOEXEC      8  /* Exec format error */
@@ -35,7 +35,6 @@
 #define EPIPE       32  /* Broken pipe */
 #define EDOM        33  /* Math argument out of domain of func */
 #define ERANGE      34  /* Math result not representable */
-
 #define EDEADLK     35  /* Resource deadlock would occur */
 #define ENAMETOOLONG    36  /* File name too long */
 #define ENOLCK      37  /* No record locks available */
@@ -59,9 +58,7 @@
 #define ENOANO      55  /* No anode */
 #define EBADRQC     56  /* Invalid request code */
 #define EBADSLT     57  /* Invalid slot */
-
 #define EDEADLOCK   EDEADLK
-
 #define EBFONT      59  /* Bad font file format */
 #define ENOSTR      60  /* Device not a stream */
 #define ENODATA     61  /* No data available */

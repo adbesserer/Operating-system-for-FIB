@@ -1,69 +1,68 @@
 #include <asm.h>
 
-/*asm ( assembler template 
-           : output operands                  optional
-           : input operands                   optional
-           : list of clobbered registers      optional
-           ); */
-/*
-+---+--------------------+
-| r |    Register(s)     |
-+---+--------------------+
-| a |   %eax, %ax, %al   |
-| b |   %ebx, %bx, %bl   |
-| c |   %ecx, %cx, %cl   |
-| d |   %edx, %dx, %dl   |
-| S |   %esi, %si        |
-| D |   %edi, %di        |
-+---+--------------------+*/
-
-
 ENTRY(write)
-  pushl %ebp
-  movl  %esp, %ebp
-  /*save context*/
-  pushl %ebx
-  /*parameter passing*/
-  movl 8(%ebp), %ebx
-  movl 12(%ebp), %ecx
-  movl 16(%ebp), %edx
-
-  /*identifier of system call in eax*/
-  movl $4, %eax
-  /*generate interrupt*/
-  int $0x80
-  /*restore context*/
-  popl %ebx
-  popl %ebp
-  /*manage error/result*/
-  cmpl $0, %eax
-  jge  finWr
-  /*save absolute value of error in errno*/
-  movl $0, %edx
-  subl %eax, %edx
-  movl %edx, errno
-  /*put -1 in eax*/
-  movl $-1, %eax
-finWr:
-  ret
-
-ENTRY(gettime)
+	/* dynamic link */
 	pushl %ebp
- 	movl  %esp, %ebp
-  	/*identifier of system call in eax*/
-  	movl $10, %eax
-  	/*generate interrupt*/
-  	int $0x80
-  	 /*restore context*/
-  	popl %ebp
-  	/*manage error/result*/
-  	cmpl $0, %eax
-  	jge  finGt
-  	/*save absolute value of error in errno*/
-  	movl $0, %edx
-  	subl %edx, %eax
-  	movl %edx, errno
-  	/*put -1 in eax*/
-  	movl $-1, %eax
-finGt:
-  	ret
+	movl %esp, %ebp
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx 	/*fd*/
+	movl 12(%ebp), %ecx 	/*buffer*/
+	movl 16(%ebp), %edx /*size*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $4, %eax;
+	int $0x80
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx
+	popl %ebp
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax
+	jge fin_write
+	
+	movl $0, %edx
+	subl %eax, %edx
+	movl %edx, errno
+	movl $-1, %eax
+	/*managed error/result*/
+	
+fin_write:
+	ret
+	
+ENTRY(gettime)
+	/* dynamic link */
+	pushl %ebp
+	movl %esp, %ebp
+	/* dynamic link */
+	
+	/* interrupt generation*/
+	movl $10, %eax;
+	int $0x80
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebp
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax
+	jge fin_gettime
+	
+	movl $0, %edx
+	subl %edx, %eax
+	movl %edx, errno
+	movl $-1, %eax
+	/*managed error/result*/
+	
+fin_gettime:
+	ret

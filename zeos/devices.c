@@ -1,3 +1,7 @@
+/*
+ * devices.c DEVICE DEPENDENT PART OF THE SYSTEM CALLS
+ */
+
 #include <io.h>
 #include <utils.h>
 #include <list.h>

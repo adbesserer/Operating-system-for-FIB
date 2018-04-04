@@ -6,53 +6,70 @@
 # 1 "wrappers.S"
 # 1 "include/asm.h" 1
 # 2 "wrappers.S" 2
-# 21 "wrappers.S"
+
 .globl write; .type write, @function; .align 0; write:
-  pushl %ebp
-  movl %esp, %ebp
 
-  pushl %ebx
-
-  movl 8(%ebp), %ebx
-  movl 12(%ebp), %ecx
-  movl 16(%ebp), %edx
+ pushl %ebp
+ movl %esp, %ebp
 
 
-  movl $4, %eax
 
-  int $0x80
+ pushl %ebx
 
-  popl %ebx
-  popl %ebp
 
-  cmpl $0, %eax
-  jge finWr
 
-  movl $0, %edx
-  subl %edx, %eax
-  movl %edx, errno
+ movl 8(%ebp), %ebx
+ movl 12(%ebp), %ecx
+ movl 16(%ebp), %edx
 
-  movl $-1, %eax
-finWr:
-  ret
+
+
+ movl $4, %eax;
+ int $0x80
+
+
+
+ popl %ebx
+ popl %ebp
+
+
+
+ cmpl $0, %eax
+ jge fin_write
+
+ movl $0, %edx
+ subl %eax, %edx
+ movl %edx, errno
+ movl $-1, %eax
+
+
+fin_write:
+ ret
 
 .globl gettime; .type gettime, @function; .align 0; gettime:
+
  pushl %ebp
-  movl %esp, %ebp
+ movl %esp, %ebp
 
-   movl $10, %eax
 
-   int $0x80
 
-   popl %ebp
+ movl $10, %eax;
+ int $0x80
 
-   cmpl $0, %eax
-   jge finGt
 
-   movl $0, %edx
-   subl %edx, %eax
-   movl %edx, errno
 
-   movl $-1, %eax
-finGt:
-   ret
+ popl %ebp
+
+
+
+ cmpl $0, %eax
+ jge fin_gettime
+
+ movl $0, %edx
+ subl %edx, %eax
+ movl %edx, errno
+ movl $-1, %eax
+
+
+fin_gettime:
+ ret

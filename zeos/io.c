@@ -1,9 +1,8 @@
 /*
- * io.c - 
+ * io.c - basic management of input-output
  */
 
 #include <io.h>
-
 #include <types.h>
 
 /**************/

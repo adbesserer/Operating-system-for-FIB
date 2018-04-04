@@ -6,7 +6,6 @@
 #include <segment.h>
 #include <errno.h>
 
-
 /**************************************************/
 /**** Save & Restore ******************************/
 /**                                              **/
@@ -37,71 +36,67 @@
 /**************************************************/
 
 #define SAVE_ALL \
-    pushl %gs; \
-    pushl %fs; \
-    pushl %es; \
-    pushl %ds; \
-    pushl %eax; \
-    pushl %ebp; \
-    pushl %edi; \
-    pushl %esi; \
-    pushl %edx; \
-    pushl %ecx; \
-    pushl %ebx; \
-    movl $__KERNEL_DS, %edx;    \
-    movl %edx, %ds;           \
-    movl %edx, %es
+      pushl %gs; \
+      pushl %fs; \
+      pushl %es; \
+      pushl %ds; \
+      pushl %eax; \
+      pushl %ebp; \
+      pushl %edi; \
+      pushl %esi; \
+      pushl %edx; \
+      pushl %ecx; \
+      pushl %ebx; \
+      movl $__KERNEL_DS, %edx;    \
+      movl %edx, %ds;           \
+      movl %edx, %es
 
 #define RESTORE_ALL \
-	popl %ebx; \
-	popl %ecx; \
-	popl %edx; \
-	popl %esi; \
-	popl %edi; \
-	popl %ebp; \
-	popl %eax; \
-	popl %ds; \
-	popl %es; \
-	popl %fs; \
-	popl %gs
-
-#define EOI      \
-	movb $0x20, %al; \
-	outb %al, $0x20 
-
+	  popl %ebx; \
+	  popl %ecx; \
+	  popl %edx; \
+	  popl %esi; \
+	  popl %edi; \
+	  popl %ebp; \
+	  popl %eax; \
+	  popl %ds; \
+	  popl %es; \
+	  popl %fs; \
+	  popl %gs
+	  
+#define EOI \
+	   movb $0x20, %al; \
+	   outb %al, $0x20
+      
 ENTRY(keyboard_handler)
-	SAVE_ALL
-	EOI
-	call keyboard_routine
-	RESTORE_ALL
-	/*clear error*/
-	iret
+		SAVE_ALL
+		EOI
+		call keyboard_routine
+		RESTORE_ALL
+        /*clear error*/
+        iret
 
 ENTRY(clock_handler)
-	SAVE_ALL
-	EOI
-	call clock_routine
-	RESTORE_ALL
-	/*clear error*/
-	iret
-
+		SAVE_ALL
+		EOI
+		call clock_routine
+		RESTORE_ALL
+        /*clear error*/
+        iret
+        
 ENTRY(system_call_handler)
-	SAVE_ALL
-	/*check that it is a correct syscall num.*/
-	cmpl $0, %eax
+	SAVE_ALL                            // Save the current context
+	cmpl $0, %eax						// Is syscall number negative?
 	jl err
 	cmpl $MAX_SYSCALL, %eax
 	jg err
-	/*call system routine*/
-	call *sys_call_table(, %eax, 0x04);
+	call *sys_call_table (, %eax, 0x04)
 	jmp fin
-
 err:
 	movl $-ENOSYS, %eax
 fin:
-	movl %eax, 0x18(%esp)
-	RESTORE_ALL
-	/*clear error*/
+	movl %eax, 0x18(%esp)               // Change the eax value in the stack 
+	RESTORE_ALL                         // Restore the context
 	iret
+ 
 
-	

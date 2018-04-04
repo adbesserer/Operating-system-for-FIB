@@ -1,5 +1,5 @@
 /*
- * hardware.c 
+ * hardware.c - INTERRUPT MASK
  */
 
 
@@ -103,16 +103,16 @@ __asm__ __volatile__(
   "call delay\n\t"
   "sti"
   : /*no output*/
-  : "i" (0xFC)       /* 0xFF = 11111111 -> all bits disabled */
-                     /* 0xFF = 11111101 -> keyboard enabled */
-                     /* 0xFF = 11111100 -> keyboard & timer */
-
+  : "i" (0xfc)       /* 0xFF = 11111111 -> all bits disabled 
+					  * 0xFD = 11111101 -> keyboard enabled
+					  * 0x   = 11111100 -> keyboard & clock enabled
+					  */
   : "%al" );
 }
 
 void delay(void)
 {
-__asm__ __volatile__(
+__asm__ __volatile__(	
   "jmp a\na:\t"
   : : );
 }

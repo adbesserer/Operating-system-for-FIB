@@ -1,5 +1,5 @@
 /*
- * interrupt.c -
+ * interrupt.c - INTERRUPTION SERVICE ROUTINES AND EXCEPTIONS
  */
 #include <types.h>
 #include <interrupt.h>
@@ -9,7 +9,12 @@
 
 #include <zeos_interrupt.h>
 
-extern zeos_ticks;
+//Functions that need to be available (coming from other files)
+void keyboard_handler(); // <- Comes from Entry.S handler.
+void clock_handler();
+void system_call_handler();
+
+extern int zeos_ticks;
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -30,9 +35,7 @@ char char_map[] =
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0'
 };
-void keyboard_handler();
-void system_call_handler();
-void clock_handler();
+
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
@@ -78,6 +81,7 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   idt[vector].highOffset      = highWord((DWord)handler);
 }
 
+
 void setIdt()
 {
   /* Program interrups/exception service routines */
@@ -90,25 +94,30 @@ void setIdt()
   setInterruptHandler(33, keyboard_handler, 0);
   setInterruptHandler(32, clock_handler, 0);
   setTrapHandler(0x80, system_call_handler, 3);
+
   set_idt_reg(&idtR);
 }
 
 void keyboard_routine()
 {
-	unsigned char c, mask;
-	c = inb(0x60);
+	unsigned char tmp, mask;
+	tmp = inb(0x60);
+	// Mask to select from Make/Break key press
 	mask = 0x80;
-	if (c & mask){ 	//MAKE 
-		c = char_map[(~mask & c)];	//translate last 7 bits of character with table 
-		if(c == '\0')				//if it's a special key we print a capital C
-			printc_xy(0,0,'C'); 		
-		else						//else we print the ascii representation of the key
-			printc_xy(0,0,c);
+	//If make
+	if (tmp & 0x80) 
+	{
+		tmp = char_map[(~mask & tmp)];
+		//Control key
+		if (tmp == '\0') printc_xy(0,0, 'C');
+		//Representable character
+		else printc_xy(0,0, tmp);
 	}
-	//ELSE it's a BREAK (lift key)
+	//Else break
 }
+
 void clock_routine()
 {
-	zeos_ticks++;
 	zeos_show_clock();
+	++zeos_ticks;
 }
