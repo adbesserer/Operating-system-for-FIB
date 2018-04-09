@@ -15,6 +15,8 @@ void clock_handler();
 void system_call_handler();
 
 extern int zeos_ticks;
+extern struct task_struct * idle_task;
+extern struct task_struct * task1;
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -111,6 +113,8 @@ void keyboard_routine()
 		//Control key
 		if (tmp == '\0') printc_xy(0,0, 'C');
 		//Representable character
+    else if (tmp == 's')
+      task_switch(idle_task);
 		else printc_xy(0,0, tmp);
 	}
 	//Else break

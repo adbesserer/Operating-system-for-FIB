@@ -145,17 +145,13 @@ void inner_task_switch(union task_union *new){
  	set_cr3(new_DIR);
  	
  	//Deshacer enlace dinamico, guardar el ebp, cambiar el esp para apuntar al nuevo mediante el valor de kerneñ_esp y volver al task switch
-  	__asm__ __volatile__ (
-  		"movl %%ebp, %0;"
-  		"movl %0, %%esp;"
-		"popl %%ebp;"
-  		"ret"
-		: "=g" (current()->kernel_esp)
-		: "g" (new->task.kernel_esp)
-		);
+  	current()->kernel_esp = get_ebp();
+  	change_esp(new->task.kernel_esp);
+  	pop_my_ebp();
+
 }
 
-void task_switch (union task_union *new)
+/*void task_switch (union task_union *new)
 {
 	// 1) Guarda los registros ESI, EDI y EBX que la llamada no guarda (es contexto necesario para el cambio al nuevo proceso).
 	__asm__
@@ -175,4 +171,4 @@ void task_switch (union task_union *new)
 	"popl %ebx"	
 	);
 }
-
+*/
