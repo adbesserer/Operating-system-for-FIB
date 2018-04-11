@@ -9,67 +9,118 @@
 
 .globl write; .type write, @function; .align 0; write:
 
- pushl %ebp
- movl %esp, %ebp
+ pushl %ebp;
+ movl %esp, %ebp;
 
 
 
- pushl %ebx
+ pushl %ebx;
 
 
 
- movl 8(%ebp), %ebx
- movl 12(%ebp), %ecx
- movl 16(%ebp), %edx
+ movl 8(%ebp), %ebx;
+ movl 12(%ebp), %ecx;
+ movl 16(%ebp), %edx;
 
 
 
  movl $4, %eax;
- int $0x80
+ int $0x80;
 
 
 
- popl %ebx
- popl %ebp
+ popl %ebx;
+ popl %ebp;
 
 
 
- cmpl $0, %eax
- jge fin_write
+ cmpl $0, %eax;
+ jge fin_write;
 
- movl $0, %edx
- subl %eax, %edx
- movl %edx, errno
- movl $-1, %eax
+ movl $0, %edx;
+ subl %eax, %edx;
+ movl %edx, errno;
+ movl $-1, %eax;
 
 
 fin_write:
  ret
 
+
 .globl gettime; .type gettime, @function; .align 0; gettime:
 
- pushl %ebp
- movl %esp, %ebp
+ pushl %ebp;
+ movl %esp, %ebp;
 
 
 
  movl $10, %eax;
- int $0x80
+ int $0x80;
 
 
 
- popl %ebp
+ popl %ebp;
 
 
 
- cmpl $0, %eax
- jge fin_gettime
+ cmpl $0, %eax;
+ jge fin_gettime;
 
- movl $0, %edx
- subl %edx, %eax
- movl %edx, errno
- movl $-1, %eax
+ movl $0, %edx;
+ subl %edx, %eax;
+ movl %edx, errno;
+ movl $-1, %eax;
 
 
 fin_gettime:
+ ret
+
+
+.globl getpid; .type getpid, @function; .align 0; getpid:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ movl $20, %eax;
+ int $0x80;
+
+
+
+ popl %ebp;
+
+ ret
+
+
+.globl fork; .type fork, @function; .align 0; fork:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ movl $2, %eax;
+ int $0x80;
+
+
+
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_fork;
+
+ movl $0, %edx;
+ subl %edx, %eax;
+ movl %edx, errno;
+ movl $-1, %eax;
+
+
+
+
+
+
+fin_fork:
  ret

@@ -22,13 +22,19 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 }
 //#endif
 
+void task_switch_asm(); // <- Comes from task_switch_asm.S.
+int * get_ebp();
+void change_esp(void *);
+//void pop_my_ebp();
+
 extern struct list_head blocked;
 // Llistes declarades a un altre fitxer
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+// Task structs declarats a un altre fitxer. Task1 es TEMPORAL.
 extern struct task_struct * idle_task;
 extern struct task_struct * task1;
-
+unsigned int global_PID = 0;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t) 
@@ -66,7 +72,6 @@ void cpu_idle(void)
 
 void init_idle (void)
 {
-	printk("Initializing idle_task\n");
 	//	1)	Get an available task_union from the freequeue to contain the characteristics of this process, delete it from freequeue, assigned to global variable idle_task
 	struct list_head *lTmp = list_first(&freequeue);
 	list_del(lTmp);
@@ -76,7 +81,7 @@ void init_idle (void)
 	union task_union *uTmp = (union task_union*)idle_task;
 	
 	//	2)  Assign PID 0 to the process.
-	idle_task->PID = 0;
+	idle_task->PID = global_PID++;
 	
 	//	3)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
 	allocate_DIR(idle_task);
@@ -93,7 +98,6 @@ void init_idle (void)
 
 void init_task1(void)
 {
-	printk("Initializing task1\n");
 	// mismo proceso que con init_idle
 	//	1)	Get an available task_union from the freequeue to contain the characteristics of this process, delete it from freequeue, assigned to global variable task1
 	// NOTA: Es global ahora para hacer pruebas, normalmente funcionaria como una task normal y se crearia y eliminaria de la forma tipica.
@@ -103,7 +107,7 @@ void init_task1(void)
   	union task_union *uTmp = (union task_union*) task1;
   	
   	//	1)  Assign PID 1 to the process
-  	task1->PID=1;
+  	task1->PID = global_PID++;
   	
   	//	2)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
   	allocate_DIR(task1);
@@ -138,37 +142,14 @@ struct task_struct* current()
 }
 
 void inner_task_switch(union task_union *new){
-	
 	//Cambio a la nueva kernel stack
-	page_table_entry *new_DIR = get_DIR(&new->task);
-  	tss.esp0 = (int) &(new->stack[KERNEL_STACK_SIZE]);
- 	set_cr3(new_DIR);
- 	
- 	//Deshacer enlace dinamico, guardar el ebp, cambiar el esp para apuntar al nuevo mediante el valor de kerneñ_esp y volver al task switch
-  	current()->kernel_esp = get_ebp();
-  	change_esp(new->task.kernel_esp);
-  	pop_my_ebp();
+	tss.esp0 = (int) &(new->stack[KERNEL_STACK_SIZE]);
+	set_cr3(get_DIR(&new->task));
+	//Deshacer enlace dinamico, guardar el ebp, cambiar el esp para apuntar al nuevo mediante el valor de kernel_esp y volver al task switch
+	current()->kernel_esp = get_ebp();
+	printk("ebp agafat");
+	change_esp(new->task.kernel_esp);
+	//pop_my_ebp();
+	printk("tot fet");
 
 }
-
-/*void task_switch (union task_union *new)
-{
-	// 1) Guarda los registros ESI, EDI y EBX que la llamada no guarda (es contexto necesario para el cambio al nuevo proceso).
-	__asm__
-	(
-  	"pushl %ebx;"
-	"pushl %esi;"
-	"pushl %edi"
-  	);
-  	
-  	// 2) llama a inner_task_switch
-	inner_task_switch(new);
-	
-	// 3) Restaura el contexto guardado previo a la llamada
-	__asm__(
-	"popl %edi;"
-	"popl %esi;"
-	"popl %ebx"	
-	);
-}
-*/

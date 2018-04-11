@@ -13,10 +13,14 @@
 void keyboard_handler(); // <- Comes from Entry.S handler.
 void clock_handler();
 void system_call_handler();
+void task_switch(union task_union*);
 
 extern int zeos_ticks;
+
+//temporal, prova task_switch
 extern struct task_struct * idle_task;
 extern struct task_struct * task1;
+//---------------------------
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -114,8 +118,10 @@ void keyboard_routine()
 		if (tmp == '\0') printc_xy(0,0, 'C');
 		//Representable character
     else if (tmp == 's')
-      task_switch(idle_task);
-		else printc_xy(0,0, tmp);
+      task_switch((union task_union*) idle_task);
+  	else if (tmp == 'd')
+      task_switch((union task_union*) task1);
+	else printc_xy(0,0, tmp);
 	}
 	//Else break
 }
@@ -123,5 +129,6 @@ void keyboard_routine()
 void clock_routine()
 {
 	zeos_show_clock();
+	//---------------------------
 	++zeos_ticks;
 }
