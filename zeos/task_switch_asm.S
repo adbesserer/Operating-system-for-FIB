@@ -30,14 +30,16 @@ ENTRY(task_switch)
 	popl %ebp;
 	ret
 
-ENTRY(get_ebp) # function to get the current ebp
-	movl %ebp, %eax;
-	ret
-
-ENTRY(change_esp) # changes esp to the parameter passed and pop ebp
-	movl 4(%ebp), %esp;
-	ret
-
 # ENTRY(pop_my_ebp)
 #	movl 4(%esp), %ebp;
 #	ret
+
+ENTRY(do_the_stuff) # 1er param: old kernel stackpointer, 2ndo param: new  kernel stackpointer
+	pushl %ebp;
+	movl %esp, %ebp;
+	movl 8(%ebp), %ecx 	# ecx = &old
+	movl 12(%ebp), %edx 	# edx = &new
+	movl %ebp, (%ecx)
+	movl (%edx), %esp
+	popl %ebp
+	ret

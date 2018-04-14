@@ -74,14 +74,14 @@ void init_idle (void)
 {
 	//	1)	Get an available task_union from the freequeue to contain the characteristics of this process, delete it from freequeue, assigned to global variable idle_task
 	struct list_head *lTmp = list_first(&freequeue);
-	list_del(lTmp);
 	idle_task = list_head_to_task_struct(lTmp);
+	list_del(lTmp);
 	
 	//Si necesitas la union, solo tienes que hacer el casting, ya que la misma direccion de memoria apunta tanto al task_struct como al task_union.
 	union task_union *uTmp = (union task_union*)idle_task;
 	
 	//	2)  Assign PID 0 to the process.
-	idle_task->PID = global_PID++;
+	idle_task->PID = 0;
 	
 	//	3)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
 	allocate_DIR(idle_task);
@@ -102,12 +102,12 @@ void init_task1(void)
 	//	1)	Get an available task_union from the freequeue to contain the characteristics of this process, delete it from freequeue, assigned to global variable task1
 	// NOTA: Es global ahora para hacer pruebas, normalmente funcionaria como una task normal y se crearia y eliminaria de la forma tipica.
 	struct list_head *lTmp = list_first(&freequeue);
-  	list_del(lTmp);
   	task1 = list_head_to_task_struct(lTmp);
+  	list_del(lTmp);
   	union task_union *uTmp = (union task_union*) task1;
   	
   	//	1)  Assign PID 1 to the process
-  	task1->PID = global_PID++;
+  	task1->PID = 1;
   	
   	//	2)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
   	allocate_DIR(task1);
@@ -141,15 +141,15 @@ struct task_struct* current()
   return (struct task_struct*)(ret_value&0xfffff000);
 }
 
-void inner_task_switch(union task_union *new){
+void do_the_stuff(void * old,void * new);
+
+void inner_task_switch(union task_union *t){
 	//Cambio a la nueva kernel stack
-	tss.esp0 = (int) &(new->stack[KERNEL_STACK_SIZE]);
-	set_cr3(get_DIR(&new->task));
+	tss.esp0 = (int) &(t->stack[KERNEL_STACK_SIZE]);
+	set_cr3(t->task.dir_pages_baseAddr);
 	//Deshacer enlace dinamico, guardar el ebp, cambiar el esp para apuntar al nuevo mediante el valor de kernel_esp y volver al task switch
-	current()->kernel_esp = get_ebp();
-	printk("ebp agafat");
-	change_esp(new->task.kernel_esp);
-	//pop_my_ebp();
-	printk("tot fet");
+
+	printk("gonna do it");
+	do_the_stuff(&current()->kernel_esp, &(t->task).kernel_esp);
 
 }

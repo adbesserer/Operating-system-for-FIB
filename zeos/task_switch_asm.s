@@ -27,14 +27,16 @@
  popl %ebp;
  ret
 
-.globl get_ebp; .type get_ebp, @function; .align 0; get_ebp: # function to get the current ebp
- movl %ebp, %eax;
- ret
-
-.globl change_esp; .type change_esp, @function; .align 0; change_esp: # changes esp to the parameter passed and pop ebp
- movl 4(%ebp), %esp;
- ret
-
 # .globl pop_my_ebp; .type pop_my_ebp, @function; .align 0; pop_my_ebp:
  # movl 4(%esp), %ebp;
 # ret
+
+.globl do_the_stuff; .type do_the_stuff, @function; .align 0; do_the_stuff: # 1er param: old kernel stackpointer, 2ndo param: new kernel stackpointer
+ pushl %ebp;
+ movl %esp, %ebp;
+ movl 8(%ebp), %ecx # ecx = &old
+ movl 12(%ebp), %edx # edx = &new
+ movl %ebp, (%ecx)
+ movl (%edx), %esp
+ popl %ebp
+ ret
