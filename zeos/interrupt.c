@@ -6,6 +6,7 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
+#include <sched.h>
 
 #include <zeos_interrupt.h>
 
@@ -13,14 +14,8 @@
 void keyboard_handler(); // <- Comes from Entry.S handler.
 void clock_handler();
 void system_call_handler();
-void task_switch(union task_union*);
 
 extern int zeos_ticks;
-
-//temporal, prova task_switch
-extern struct task_struct * idle_task;
-extern struct task_struct * task1;
-//---------------------------
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -110,6 +105,7 @@ void keyboard_routine()
 	tmp = inb(0x60);
 	// Mask to select from Make/Break key press
 	mask = 0x80;
+	
 	//If make
 	if (tmp & 0x80) 
 	{
@@ -117,18 +113,15 @@ void keyboard_routine()
 		//Control key
 		if (tmp == '\0') printc_xy(0,0, 'C');
 		//Representable character
-    else if (tmp == 's')
-      task_switch((union task_union*) idle_task);
-  	else if (tmp == 'd')
-      task_switch((union task_union*) task1);
-	else printc_xy(0,0, tmp);
+		else printc_xy(0,0, tmp);
 	}
 	//Else break
 }
 
+
 void clock_routine()
 {
 	zeos_show_clock();
-	//---------------------------
 	++zeos_ticks;
+    schedule();
 }

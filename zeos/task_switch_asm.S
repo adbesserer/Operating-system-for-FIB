@@ -10,7 +10,7 @@
 	popl %esi; \
 	popl %ebx;
 
-ENTRY(task_switch)
+ENTRY(task_switch_asm)
 	/* dynamic link */
 	pushl %ebp;
 	movl %esp, %ebp;
@@ -21,7 +21,7 @@ ENTRY(task_switch)
   	# 2) llama a inner_task_switch
 	pushl 8(%ebp);
 	call inner_task_switch;
-	addl $4,(%esp);
+	addl $4,%esp;
 	
 	# 3) Restaura el contexto guardado previo a la llamada
 	RESTORE_AUX_REGS;
@@ -30,15 +30,23 @@ ENTRY(task_switch)
 	popl %ebp;
 	ret
 
-# ENTRY(pop_my_ebp)
-#	movl 4(%esp), %ebp;
+ENTRY(get_ebp) # function to get the current ebp
+	movl %ebp, %eax;
+	ret
+
+# ENTRY(change_esp) # changes esp to the parameter passed and pop ebp
+#	movl 8(%ebp), %esp;
 #	ret
 
-ENTRY(do_the_stuff) # 1er param: old kernel stackpointer, 2ndo param: new  kernel stackpointer
-	pushl %ebp;
-	movl %esp, %ebp;
-	movl 8(%ebp), %ecx 	# ecx = &old
-	movl 12(%ebp), %edx 	# edx = &new
+# ENTRY(pop_my_ebp)
+#	popl %ebp;
+#	ret
+
+ENTRY(stack_swap)
+	pushl %ebp
+	movl %esp, %ebp
+	movl 8(%ebp), %ecx
+	movl 12(%ebp), %edx
 	movl %ebp, (%ecx)
 	movl (%edx), %esp
 	popl %ebp

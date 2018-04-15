@@ -110,10 +110,62 @@ ENTRY(fork)
 	movl %edx, errno;
 	movl $-1, %eax;
 	/*managed error/result*/
-	//Haig de detectar PID del pare i del fill aqui? >_>
-	//Fem una crida a getpid?
-	//Es pot fer amb cmpl sobre 0. Si es major, es el pare, que esta retornant el PID del creat.
-	//Si es el fill, sera exactament 0 i per tant ja tenim el resultat correcte.
 
 fin_fork:
 	ret
+
+
+ENTRY(exit)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+
+	/* interrupt generation*/
+	movl $1, %eax;
+	int $0x80;
+	/* interrupt generation done */
+
+	/*recover context*/
+	popl %ebp;
+	/*recovered context*/
+
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_exit;
+
+	movl $0, %edx;
+	subl %edx, %eax;
+	movl %edx, errno;
+	movl $-1, %eax;
+	
+fin_exit:
+	ret
+
+ENTRY(get_stats)
+/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+
+	/* interrupt generation*/
+	movl $35, %eax;
+	int $0x80;
+	/* interrupt generation done */
+
+	/*recover context*/
+	popl %ebp;
+	/*recovered context*/
+
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_get_stats;
+
+	movl $0, %edx;
+	subl %edx, %eax;
+	movl %edx, errno;
+	movl $-1, %eax;
+	
+fin_get_stats:
+	ret
+	

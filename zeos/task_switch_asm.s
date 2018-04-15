@@ -7,7 +7,7 @@
 # 1 "include/asm.h" 1
 # 2 "task_switch_asm.S" 2
 # 13 "task_switch_asm.S"
-.globl task_switch; .type task_switch, @function; .align 0; task_switch:
+.globl task_switch_asm; .type task_switch_asm, @function; .align 0; task_switch_asm:
 
  pushl %ebp;
  movl %esp, %ebp;
@@ -18,7 +18,7 @@
    # 2) llama a inner_task_switch
  pushl 8(%ebp);
  call inner_task_switch;
- addl $4,(%esp);
+ addl $4,%esp;
 
  # 3) Restaura el contexto guardado previo a la llamada
  popl %edi; popl %esi; popl %ebx;;
@@ -27,15 +27,23 @@
  popl %ebp;
  ret
 
-# .globl pop_my_ebp; .type pop_my_ebp, @function; .align 0; pop_my_ebp:
- # movl 4(%esp), %ebp;
+.globl get_ebp; .type get_ebp, @function; .align 0; get_ebp: # function to get the current ebp
+ movl %ebp, %eax;
+ ret
+
+# .globl change_esp; .type change_esp, @function; .align 0; change_esp: # changes esp to the parameter passed and pop ebp
+# movl 8(%ebp), %esp;
 # ret
 
-.globl do_the_stuff; .type do_the_stuff, @function; .align 0; do_the_stuff: # 1er param: old kernel stackpointer, 2ndo param: new kernel stackpointer
- pushl %ebp;
- movl %esp, %ebp;
- movl 8(%ebp), %ecx # ecx = &old
- movl 12(%ebp), %edx # edx = &new
+# .globl pop_my_ebp; .type pop_my_ebp, @function; .align 0; pop_my_ebp:
+ # popl %ebp;
+# ret
+
+.globl stack_swap; .type stack_swap, @function; .align 0; stack_swap:
+ pushl %ebp
+ movl %esp, %ebp
+ movl 8(%ebp), %ecx
+ movl 12(%ebp), %edx
  movl %ebp, (%ecx)
  movl (%edx), %esp
  popl %ebp

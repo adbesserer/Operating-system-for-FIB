@@ -118,9 +118,60 @@ fin_gettime:
  movl $-1, %eax;
 
 
-
-
-
-
 fin_fork:
+ ret
+
+
+.globl exit; .type exit, @function; .align 0; exit:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ movl $1, %eax;
+ int $0x80;
+
+
+
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_exit;
+
+ movl $0, %edx;
+ subl %edx, %eax;
+ movl %edx, errno;
+ movl $-1, %eax;
+
+fin_exit:
+ ret
+
+.globl get_stats; .type get_stats, @function; .align 0; get_stats:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ movl $35, %eax;
+ int $0x80;
+
+
+
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_get_stats;
+
+ movl $0, %edx;
+ subl %edx, %eax;
+ movl %edx, errno;
+ movl $-1, %eax;
+
+fin_get_stats:
  ret
