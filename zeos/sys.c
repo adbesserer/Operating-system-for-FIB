@@ -51,7 +51,7 @@ int sys_fork()
 	union task_union * uChild;
 	
 	// - Buscar un PCB lliure
-	if (list_empty(&freequeue)) return -ENOMEM;
+	if (list_empty(&freequeue)) return -EAGAIN;
 	lChild = list_first(&freequeue);
 	
 	// - Libera ese PCB de la freequeue, convierte la task en la union
@@ -141,7 +141,8 @@ int sys_fork()
 	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE -offset -1];
 
 	// Inicialitzacio de status del fill
-	init_stats(&(uChild->task.process_stats));
+	uChild->task.process_stats.total_trans = 0;
+	uChild->task.process_stats.elapsed_total_ticks = get_ticks();
 	set_quantum(tChild, current()->quantum);
 	uChild->task.process_stats.remaining_ticks = current()->quantum;
 	
@@ -157,9 +158,8 @@ void sys_exit()
 	// - Alliberar TP
 	// - Alliberar Frames
 	free_user_pages(current());
-
 	// - Alliberar PCB
-	list_add_tail(&current()->list,&freequeue);
+	update_process_state_rr(current(),&freequeue); 
 
 	//find next process to executre
 	sched_next_rr();
@@ -188,23 +188,23 @@ int sys_gettime()
 	return zeos_ticks;
 }
 
-int sys_get_stats(int pid, struct stats *st)
-{
-  printk("\nGetting stats\n");
-  int i;
-
-  // Comprobació de correctesa de parametres
+int sys_get_stats(int pid, struct stats *st) {
+  //Nomes tenim dos estats per el que busquem nomes a ready o al current
+  if (pid < 0) return EINVAL;
+  if (st == NULL) return EINVAL;
   if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT; 
-  if (pid < 0) return -EINVAL;
-
-  // Recullida i update de dades.
-  for (i = 0; i < NR_TASKS; i++)
-  {
-    if (task[i].task.PID == pid)
-    {
-		copy_to_user(&(task[i].task.process_stats), st, sizeof(struct stats));
-		return 0;
-    }
+  if (pid == current()->PID) {
+    current()->process_stats.remaining_ticks = current()->quantum;
+    copy_to_user(&current()->process_stats, st, sizeof(struct stats));
+    return 0;
   }
-  return -ESRCH; /*ESRCH */
+    int i;
+    for (i=0; i<NR_TASKS; i++) {
+    	if (task[i].task.PID==pid) {
+      		task[i].task.process_stats.remaining_ticks=current()->quantum;
+      		copy_to_user(&(task[i].task.process_stats), st, sizeof(struct stats));
+      		return 0;
+    		}
+   }
+   return -ESRCH;
 }

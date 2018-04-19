@@ -6,6 +6,7 @@
 #include <mm.h>
 #include <io.h>
 #include <libc.h>
+#include <stat_funcs.h>
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
  * to protect against out of bound accesses.
@@ -197,9 +198,12 @@ void sched_next_rr()
  	
 	tTmp->exec_status = ST_RUN;
 	tTmp->process_stats.remaining_ticks = get_quantum(tTmp);
-	
-	update_stats(&(current()->process_stats.system_ticks), &(current()->process_stats.elapsed_total_ticks));
-  	update_stats(&(tTmp->process_stats.ready_ticks), &(tTmp->process_stats.elapsed_total_ticks));
+	unsigned long current_ticks = get_ticks();
+  	tTmp->process_stats.ready_ticks += current_ticks - tTmp->process_stats.elapsed_total_ticks;
+  	tTmp->process_stats.elapsed_total_ticks = get_ticks();
+	++(tTmp->process_stats.total_trans);
+	//update_stats(&(current()->process_stats.system_ticks), &(current()->process_stats.elapsed_total_ticks));
+  	//update_stats(&(tTmp->process_stats.ready_ticks), &(tTmp->process_stats.elapsed_total_ticks));
   	tTmp->process_stats.total_trans++;
   	task_switch_asm((union task_union*)tTmp);
 	
@@ -212,9 +216,11 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dest)
 	if (dest != NULL){
 		//control if the dest list is empty?
 	   	list_add_tail(&(t->list), dest);
+	   	sys_to_ready_stats();
 	   	if (dest != &readyqueue) t->exec_status = ST_BLOCKED;
 		else{
-	    	update_stats(&(t->process_stats.system_ticks), &(t->process_stats.elapsed_total_ticks));
+			
+	    	//update_stats(&(t->process_stats.system_ticks), &(t->process_stats.elapsed_total_ticks));
 	    	t->exec_status = ST_READY;
 	   	}
 	}

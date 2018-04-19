@@ -26,7 +26,7 @@ SYSLDFLAGS = -T system.lds
 USRLDFLAGS = -T user.lds
 LINKFLAGS = -g
 
-SYSOBJ = task_switch_asm.o interrupt.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o
+SYSOBJ = task_switch_asm.o interrupt.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o  stat_funcs.o
 
 LIBZEOS = -L . -l zeos -l auxjp
 
@@ -59,7 +59,7 @@ task_switch_asm.s: task_switch_asm.S $(INCLUDEDIR)/asm.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 entry.s: entry.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
-	$(CPP) $(ASMFLAGS) -o $@ $<
+	$(CPP) $(ASMFLAGS) -o $@ $< 
 
 sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
@@ -71,6 +71,8 @@ interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCL
 io.o:io.c $(INCLUDEDIR)/io.h
 
 sched.o:sched.c $(INCLUDEDIR)/sched.h
+
+stat_funcs.o: stat_funcs.c $(INCLUDEDIR)/stat_funcs.h	
 
 libc.o:libc.c $(INCLUDEDIR)/libc.h
 

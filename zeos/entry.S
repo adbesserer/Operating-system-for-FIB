@@ -64,6 +64,22 @@
 	  popl %fs; \
 	  popl %gs
 	  
+#define SAVE_REGS \
+	  pushl %eax; \
+      pushl %edi; \
+      pushl %esi; \
+      pushl %edx; \
+      pushl %ecx; \
+      pushl %ebx; \
+
+#define RESTORE_REGS \
+	  popl %ebx; \
+	  popl %ecx; \
+	  popl %edx; \
+	  popl %esi; \
+	  popl %edi; \
+	  popl %eax; \
+	  
 #define EOI \
 	   movb $0x20, %al; \
 	   outb %al, $0x20
@@ -90,7 +106,13 @@ ENTRY(system_call_handler)
 	jl err
 	cmpl $MAX_SYSCALL, %eax
 	jg err
+	SAVE_REGS
+	call user_to_sys_stats	
+	RESTORE_REGS
 	call *sys_call_table (, %eax, 0x04)
+	SAVE_REGS
+	call sys_to_user_stats
+	RESTORE_REGS
 	jmp fin
 err:
 	movl $-ENOSYS, %eax
