@@ -206,7 +206,6 @@ void sched_next_rr()
 	++(tTmp->process_stats.total_trans);
 
   	task_switch_asm((union task_union*)tTmp);
-	
 }
 
 void update_process_state_rr(struct task_struct *t, struct list_head *dest)

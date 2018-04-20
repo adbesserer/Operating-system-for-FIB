@@ -28,12 +28,10 @@ ENTRY(write)
 	
 	/*manage error/result*/
 	cmpl $0, %eax;
-	jge fin_write;
-
-	movl $0, %edx;
-	subl %eax, %edx;
-	movl %edx, errno;
-	movl $-1, %eax;
+	jge fin_write
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 	/*managed error/result*/
 	
 fin_write:
@@ -57,12 +55,10 @@ ENTRY(gettime)
 	
 	/*manage error/result*/
 	cmpl $0, %eax;
-	jge fin_gettime;
-
-	movl $0, %edx;
-	subl %edx, %eax;
-	movl %edx, errno;
-	movl $-1, %eax;
+	jge fin_gettime
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 	/*managed error/result*/
 
 fin_gettime:
@@ -103,12 +99,10 @@ ENTRY(fork)
 
 	/*manage error/result*/
 	cmpl $0, %eax;
-	jge fin_fork;
-
-	movl $0, %edx;
-	subl %edx, %eax;
-	movl %edx, errno;
-	movl $-1, %eax;
+	jge fin_fork
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 	/*managed error/result*/
 
 fin_fork:
@@ -136,6 +130,9 @@ ENTRY(get_stats)
 	pushl %ebp;
 	movl %esp, %ebp;
 	/* dynamic link */
+	
+	pushl %ebx
+	pushl %ecx
 
 	movl 8(%ebp),%ebx
 	movl 12(%ebp),%ecx
@@ -144,19 +141,20 @@ ENTRY(get_stats)
 	int $0x80;
 	/* interrupt generation done */
 
-	/*recover context*/
-	popl %ebp;
+
 	/*recovered context*/
 
 	/*manage error/result*/
 	cmpl $0, %eax;
-	jge fin_get_stats;
-
-	movl $0, %edx;
-	subl %edx, %eax;
-	movl %edx, errno;
-	movl $-1, %eax;
+	jge fin_get_stats
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 	
 fin_get_stats:
+	/*recover context*/
+	popl %ecx
+	popl %ebx;
+	popl %ebp;
 	ret
 	

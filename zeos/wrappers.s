@@ -35,12 +35,10 @@
 
 
  cmpl $0, %eax;
- jge fin_write;
-
- movl $0, %edx;
- subl %eax, %edx;
- movl %edx, errno;
- movl $-1, %eax;
+ jge fin_write
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 
 
 fin_write:
@@ -64,12 +62,10 @@ fin_write:
 
 
  cmpl $0, %eax;
- jge fin_gettime;
-
- movl $0, %edx;
- subl %edx, %eax;
- movl %edx, errno;
- movl $-1, %eax;
+ jge fin_gettime
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 
 
 fin_gettime:
@@ -110,12 +106,10 @@ fin_gettime:
 
 
  cmpl $0, %eax;
- jge fin_fork;
-
- movl $0, %edx;
- subl %edx, %eax;
- movl %edx, errno;
- movl $-1, %eax;
+ jge fin_fork
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 
 
 fin_fork:
@@ -144,6 +138,9 @@ fin_fork:
  movl %esp, %ebp;
 
 
+ pushl %ebx
+ pushl %ecx
+
  movl 8(%ebp),%ebx
  movl 12(%ebp),%ecx
 
@@ -152,17 +149,18 @@ fin_fork:
 
 
 
- popl %ebp;
 
 
 
  cmpl $0, %eax;
- jge fin_get_stats;
-
- movl $0, %edx;
- subl %edx, %eax;
- movl %edx, errno;
- movl $-1, %eax;
+ jge fin_get_stats
+        imull $-1, %eax
+        movl %eax, errno
+        movl $-1, %eax
 
 fin_get_stats:
+
+ popl %ecx
+ popl %ebx;
+ popl %ebp;
  ret

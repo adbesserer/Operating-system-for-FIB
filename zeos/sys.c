@@ -192,9 +192,9 @@ int sys_gettime()
 
 int sys_get_stats(int pid, struct stats *st) {
   //Nomes tenim dos estats per el que busquem nomes a ready o al current
-  if (pid < 0) return  -ESRCH;
-  if (st == NULL) return -1;
-  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -1; 
+  if (pid < 0) return  -EINVAL;
+  if (st == NULL) return -EFAULT;
+  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT; 
   if (pid == current()->PID) {
     copy_to_user(&current()->process_stats, st, sizeof(struct stats));
     return 0;
