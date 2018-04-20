@@ -28,14 +28,14 @@ void task_switch_asm(union task_union*); // <- Comes from task_switch_asm.S.
 void stack_swap(void * old, void * new);
 
 /* Constants */
-#define DEFAULT_QUANTUM 20
+#define DEFAULT_QUANTUM 10
 
 /* variables externes i globals */
 extern struct list_head blocked;
 // Llistes declarades a un altre fitxer
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
-unsigned int global_PID = 0;
+int global_PID = 2;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t) 
@@ -78,7 +78,7 @@ void init_stats(struct stats *s){
 	s->system_ticks = 0;
 	s->blocked_ticks = 0;
 	s->ready_ticks = 0;
-	s->elapsed_total_ticks = 0;
+	s->elapsed_total_ticks = get_ticks();
 	s->total_trans = 0;
 	s->remaining_ticks = DEFAULT_QUANTUM;
 }
@@ -104,7 +104,7 @@ void init_idle (void)
 	union task_union *uTmp = (union task_union*)idle_task;
 	
 	//	2)  Assign PID 0 to the process, initialize stats, set default quantum.
-	idle_task->PID = global_PID++;
+	idle_task->PID = 0;
 	idle_task->quantum = DEFAULT_QUANTUM;
 	init_stats(&idle_task->process_stats);
 
@@ -134,9 +134,9 @@ void init_task1(void)
   	union task_union *uTmp = (union task_union*) task1;
   	
   	//	1)  Assign PID 1 to the process, initialize stats, set default quantum.
-  	task1->PID = global_PID++;
+  	task1->PID = 1;
   	task1->quantum = DEFAULT_QUANTUM;
-  	init_stats(&task1->process_stats);
+  	init_stats(&(task1->process_stats));
   	
   	//	2)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
   	allocate_DIR(task1);
@@ -154,6 +154,7 @@ void init_task1(void)
 void init_sched(){
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
+	INIT_LIST_HEAD(&blocked);
 	int i;
 	for (i = 0; i < NR_TASKS; ++i) list_add(&task[i].task.list, &freequeue);
 }
@@ -180,6 +181,7 @@ void inner_task_switch(union task_union *new)
 	//Deshacer enlace dinamico, guardar el ebp, cambiar el esp para apuntar al nuevo mediante el valor de kernel_esp y volver al task switch
 	//Guardem l'EBP de la pila actual al PCB del process
 	stack_swap(&current()->kernel_esp, &(new->task).kernel_esp);
+
 }
 
 void sched_next_rr()
@@ -202,9 +204,7 @@ void sched_next_rr()
   	tTmp->process_stats.ready_ticks += current_ticks - tTmp->process_stats.elapsed_total_ticks;
   	tTmp->process_stats.elapsed_total_ticks = get_ticks();
 	++(tTmp->process_stats.total_trans);
-	//update_stats(&(current()->process_stats.system_ticks), &(current()->process_stats.elapsed_total_ticks));
-  	//update_stats(&(tTmp->process_stats.ready_ticks), &(tTmp->process_stats.elapsed_total_ticks));
-  	tTmp->process_stats.total_trans++;
+
   	task_switch_asm((union task_union*)tTmp);
 	
 }

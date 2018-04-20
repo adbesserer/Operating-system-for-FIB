@@ -11,6 +11,9 @@ main(void)
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
   
   runjp();
+//	fork();
+//	fork();
+//	get_stats();
   while(1){}
   return 0;
 }

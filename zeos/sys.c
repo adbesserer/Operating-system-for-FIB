@@ -8,6 +8,7 @@
 #include <mm_address.h>
 #include <sched.h>
 #include <errno.h>
+#include <libc.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -16,7 +17,7 @@
 extern int zeos_ticks;
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
-extern unsigned int global_PID;
+extern int global_PID;
 
 // Funcio per agafar l'ebp del pare
 void * get_ebp();
@@ -94,7 +95,7 @@ int sys_fork()
 				/* Deallocata el PCB */
 				list_add_tail(lChild, &freequeue);
 				/* Retorna codi d'error, parant l'execució del fork */
-				return -EAGAIN;
+				return -ENOMEM;
 			}
 			// Else assigna la pagina ss al fill.
 			set_ss_pag(PT_Child, PAG_LOG_INIT_DATA + pg, new_pg);
@@ -141,10 +142,10 @@ int sys_fork()
 	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE -offset -1];
 
 	// Inicialitzacio de status del fill
-	uChild->task.process_stats.total_trans = 0;
-	uChild->task.process_stats.elapsed_total_ticks = get_ticks();
 	set_quantum(tChild, current()->quantum);
-	uChild->task.process_stats.remaining_ticks = current()->quantum;
+	init_stats(&tChild->process_stats);
+	tChild->exec_status = ST_READY;
+
 	
 	// Encuar el fill a la cua
 	list_add_tail(&(uChild->task.list), &readyqueue);
@@ -161,6 +162,7 @@ void sys_exit()
 	// - Alliberar PCB
 	update_process_state_rr(current(),&freequeue); 
 
+	current()->PID=-1;
 	//find next process to executre
 	sched_next_rr();
 }
@@ -190,21 +192,20 @@ int sys_gettime()
 
 int sys_get_stats(int pid, struct stats *st) {
   //Nomes tenim dos estats per el que busquem nomes a ready o al current
-  if (pid < 0) return EINVAL;
-  if (st == NULL) return EINVAL;
-  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT; 
+  if (pid < 0) return  -ESRCH;
+  if (st == NULL) return -1;
+  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -1; 
   if (pid == current()->PID) {
-    current()->process_stats.remaining_ticks = current()->quantum;
     copy_to_user(&current()->process_stats, st, sizeof(struct stats));
     return 0;
   }
     int i;
     for (i=0; i<NR_TASKS; i++) {
     	if (task[i].task.PID==pid) {
-      		task[i].task.process_stats.remaining_ticks=current()->quantum;
+      		task[i].task.process_stats.remaining_ticks= current()->process_stats.remaining_ticks;
       		copy_to_user(&(task[i].task.process_stats), st, sizeof(struct stats));
       		return 0;
     		}
    }
-   return -ESRCH;
+   return  -ESRCH;
 }

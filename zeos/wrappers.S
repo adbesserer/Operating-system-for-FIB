@@ -129,17 +129,6 @@ ENTRY(exit)
 	/*recover context*/
 	popl %ebp;
 	/*recovered context*/
-
-	/*manage error/result*/
-	cmpl $0, %eax;
-	jge fin_exit;
-
-	movl $0, %edx;
-	subl %edx, %eax;
-	movl %edx, errno;
-	movl $-1, %eax;
-	
-fin_exit:
 	ret
 
 ENTRY(get_stats)
@@ -148,6 +137,8 @@ ENTRY(get_stats)
 	movl %esp, %ebp;
 	/* dynamic link */
 
+	movl 8(%ebp),%ebx
+	movl 12(%ebp),%ecx
 	/* interrupt generation*/
 	movl $35, %eax;
 	int $0x80;

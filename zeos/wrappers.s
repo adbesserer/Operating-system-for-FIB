@@ -136,17 +136,6 @@ fin_fork:
 
  popl %ebp;
 
-
-
- cmpl $0, %eax;
- jge fin_exit;
-
- movl $0, %edx;
- subl %edx, %eax;
- movl %edx, errno;
- movl $-1, %eax;
-
-fin_exit:
  ret
 
 .globl get_stats; .type get_stats, @function; .align 0; get_stats:
@@ -155,6 +144,8 @@ fin_exit:
  movl %esp, %ebp;
 
 
+ movl 8(%ebp),%ebx
+ movl 12(%ebp),%ecx
 
  movl $35, %eax;
  int $0x80;
