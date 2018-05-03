@@ -18,6 +18,8 @@ int strlen(char *a);
 
 void perror();
 
+int clone(void (*function)(void),void *stack);
+
 int getpid();
 
 int fork();

@@ -18,6 +18,8 @@ extern Byte phys_mem[TOTAL_PAGES];
 
 extern page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES];
 
+int dirCounter[NR_TASKS];
+
 int init_frames( void );
 int alloc_frame( void );
 void free_frame( unsigned int frame );

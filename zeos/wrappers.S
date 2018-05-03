@@ -163,3 +163,39 @@ fin_get_stats:
 	/*recovered context*/
 	ret
 	
+	
+ENTRY(clone)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx;
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx; 	/*function*/
+	movl 12(%ebp), %ecx; 	/*stack*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $19, %eax;
+	int $0x80;
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx;
+	popl %ebp;
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_clone
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+	/*managed error/result*/
+	
+fin_clone:
+	ret

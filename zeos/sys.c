@@ -44,6 +44,56 @@ int sys_getpid()
 	return current()->PID;
 }
 
+int sys_clone(void (*function)(void), void *stack){
+	//- Declarar estructuras auxiliares
+	struct list_head * lChild = NULL;
+	struct task_struct * tChild;
+	union task_union * uChild;
+	
+	// - Buscar un PCB lliure
+	if (list_empty(&freequeue)) return -EAGAIN;
+	lChild = list_first(&freequeue);
+	
+	// - Libera ese PCB de la freequeue, convierte la task en la union
+	list_del(lChild);
+	tChild = list_head_to_task_struct(lChild);
+	uChild = (union task_union *) tChild;
+	copy_data(current(), uChild, sizeof(union task_union));
+
+	// Asignar el nou PID al Child
+	uChild->task.PID = global_PID++;
+
+	// Inicialitzacio de status del fill
+	set_quantum(tChild, current()->quantum);
+	init_stats(&tChild->process_stats);
+	tChild->exec_status = ST_READY;
+	
+	// Encuar el fill a la cua
+	list_add_tail(&(uChild->task.list), &readyqueue);
+
+	//afegir 1  al contador per aquest directori
+	int pos = ((int)current()-(int)task)/sizeof(union task_union);
+	dirCounter[pos]++;
+
+	// Modificar pila para el clon
+	//Direccion de memoria de bottom de la pila.
+	void * pilaPadre = &((union task_union *) current())->stack[KERNEL_STACK_SIZE];
+	void * ebpPadre = get_ebp();
+	unsigned int offset =  (pilaPadre - ebpPadre)/4;
+	
+	// volem modificar l'ebp perque apunti a la nova pila.
+	uChild->stack[KERNEL_STACK_SIZE - offset -1] =(unsigned int) stack;
+	// apilar la funcio parametre
+	uChild->stack[KERNEL_STACK_SIZE - offset] =(unsigned int) function;	
+	//modificar kernel stack pointer
+	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE -offset -1];
+
+		// Encuar el fill a la cua
+	list_add_tail(&(uChild->task.list), &readyqueue);
+	
+	return uChild->task.PID;
+
+}
 int sys_fork()
 {
 	//- Declarar estructuras auxiliares
@@ -154,9 +204,12 @@ int sys_fork()
 
 void sys_exit()
 {
-	// free mem
-	free_user_pages(current());
-	
+	//no podemos liberar memoria si estamos destruyendo un clon y aun quedan procesos usando el directorio
+	int pos = ((int)current()-(int)task)/sizeof(union task_union);
+	if(--dirCounter[pos]==0){
+		// free mem
+		free_user_pages(current());
+	}
 	// free PCB
 	update_process_state_rr(current(),&freequeue); 
 

@@ -3,6 +3,7 @@
  */
 
 #include <sched.h>
+#include <errno.h>
 #include <mm.h>
 #include <io.h>
 #include <libc.h>
@@ -51,13 +52,17 @@ page_table_entry * get_PT (struct task_struct *t)
 /* Allocation of directory for a task struct.*/
 int allocate_DIR(struct task_struct *t) 
 {
-	int pos;
+	int i;
 
-	pos = ((int)t-(int)task)/sizeof(union task_union);
+	for(i=0; i!=NR_TASKS; ++i){
+		if(dirCounter[i]==0){	//free dir entry at i
+			t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[i];
+			dirCounter[i]++;
+			return 1;
+		}
+	}
 
-	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
-
-	return 1;
+	return -ENOMEM;
 }
 
 /* Code of cpu_idle function. */
@@ -98,7 +103,7 @@ void init_idle (void)
 	idle_task->quantum = DEFAULT_QUANTUM;
 	init_stats(&idle_task->process_stats);
 
-	//	3)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
+	//	3)  Initialize field dir_pages_baseAddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
 	allocate_DIR(idle_task);
 	
 	//	4)  Initialize  an  execution  context  for  the  procees  to  restore  it  when  it  gets  assigned  the  cpu (see section 4.5) and executes cpu_idle.
