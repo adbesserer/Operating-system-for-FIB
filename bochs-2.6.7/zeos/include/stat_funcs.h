@@ -6,8 +6,6 @@
 #include <io.h>
 #include <libc.h>
 
-extern struct task_struct * t;
-
 void user_to_sys_stats();
 void sys_to_user_stats();
 void sys_to_ready_stats();
