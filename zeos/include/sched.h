@@ -32,6 +32,15 @@ union task_union {
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
 };
 
+struct semaphore {
+	int ownerPID; //PID de l'amo
+	int counter;
+	struct list_head queue;
+
+};
+
+struct semaphore semaphores[20];
+
 extern union task_union protected_tasks[NR_TASKS+2];
 extern union task_union *task; /* Vector de tasques */
 extern struct task_struct *idle_task;

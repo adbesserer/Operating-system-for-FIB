@@ -199,3 +199,144 @@ ENTRY(clone)
 	
 fin_clone:
 	ret
+
+ENTRY(sem_init)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx;
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx; 	/*id of sem*/
+	movl 12(%ebp), %ecx; 	/*initial value of counter*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $21, %eax;
+	int $0x80;
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx;
+	popl %ebp;
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_sem_init
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+	/*managed error/result*/
+	
+fin_sem_init:
+	ret
+
+  ENTRY(sem_wait)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx;
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx; 	/*id of sem*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $22, %eax;
+	int $0x80;
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx;
+	popl %ebp;
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_sem_wait
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+	/*managed error/result*/
+	
+fin_sem_wait:
+	ret
+
+  ENTRY(sem_signal)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx;
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx; 	/*id of sem*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $23, %eax;
+	int $0x80;
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx;
+	popl %ebp;
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_sem_signal
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+	/*managed error/result*/
+
+fin_sem_signal:
+	ret
+
+  ENTRY(sem_destroy)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx;
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx; 	/*id of sem*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $24, %eax;
+	int $0x80;
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx;
+	popl %ebp;
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_sem_destroy
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+	/*managed error/result*/
+	
+fin_sem_destroy:	
+	ret

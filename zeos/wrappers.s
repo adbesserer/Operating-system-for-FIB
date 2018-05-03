@@ -206,3 +206,144 @@ fin_get_stats:
 
 fin_clone:
  ret
+
+.globl sem_init; .type sem_init, @function; .align 0; sem_init:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ pushl %ebx;
+
+
+
+ movl 8(%ebp), %ebx;
+ movl 12(%ebp), %ecx;
+
+
+
+ movl $21, %eax;
+ int $0x80;
+
+
+
+ popl %ebx;
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_sem_init
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+
+fin_sem_init:
+ ret
+
+  .globl sem_wait; .type sem_wait, @function; .align 0; sem_wait:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ pushl %ebx;
+
+
+
+ movl 8(%ebp), %ebx;
+
+
+
+ movl $22, %eax;
+ int $0x80;
+
+
+
+ popl %ebx;
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_sem_wait
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+
+fin_sem_wait:
+ ret
+
+  .globl sem_signal; .type sem_signal, @function; .align 0; sem_signal:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ pushl %ebx;
+
+
+
+ movl 8(%ebp), %ebx;
+
+
+
+ movl $23, %eax;
+ int $0x80;
+
+
+
+ popl %ebx;
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_sem_signal
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+
+fin_sem_signal:
+ ret
+
+  .globl sem_destroy; .type sem_destroy, @function; .align 0; sem_destroy:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ pushl %ebx;
+
+
+
+ movl 8(%ebp), %ebx;
+
+
+
+ movl $24, %eax;
+ int $0x80;
+
+
+
+ popl %ebx;
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_sem_destroy
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+
+fin_sem_destroy:
+ ret

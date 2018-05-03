@@ -146,10 +146,15 @@ void init_task1(void)
  }
 
 void init_sched(){
+	//init semaphores
+	int i;
+	for (i = 0; i != 20; ++i){
+		semaphores[i].ownerPID = -1;
+	}
+	//init lists
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
 	INIT_LIST_HEAD(&blocked);
-	int i;
 	for (i = 0; i < NR_TASKS; ++i) list_add(&task[i].task.list, &freequeue);
 }
 

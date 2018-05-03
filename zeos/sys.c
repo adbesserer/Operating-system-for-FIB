@@ -264,3 +264,58 @@ int sys_get_stats(int pid, struct stats *st) {
 	}
 	return -ESRCH;
 }
+
+int sys_sem_init(int n_sem, unsigned int value){	//1:id of sem, 2: intitial value of counter
+	printk("init\n");
+	//check correct id
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID >= 0) return -1;
+	semaphores[n_sem].ownerPID = current()->PID;
+	semaphores[n_sem].counter = value;
+	INIT_LIST_HEAD(&semaphores[n_sem].queue);
+	return 0;
+}
+
+int sys_sem_wait (int n_sem){
+		printk("wait\n");
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -1;
+	if(semaphores[n_sem].counter <= 0){
+		printk("a la cola");
+		update_process_state_rr(current(), &semaphores[n_sem].queue);
+		sched_next_rr();
+	}
+	else{
+		--semaphores[n_sem].counter;
+	}
+	return 0;
+}
+int sys_sem_signal (int n_sem){
+		printk("signal\n");
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -1;
+	if(list_empty(&semaphores[n_sem].queue)){
+		++semaphores[n_sem].counter;
+	}
+	else{
+		struct list_head *first = list_first(&semaphores[n_sem].queue);
+		list_del(first);
+		struct task_struct *t = list_head_to_task_struct(first);
+		update_process_state_rr(t, &readyqueue);
+	}
+	return 0;
+
+}
+int sys_sem_destroy (int n_sem){
+	printk("destroy\n");
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -1;
+	if(current()->PID == semaphores[n_sem].ownerPID){	//nomès si sóc l'amo del semafor el puc matar
+		semaphores[n_sem].ownerPID = -1;
+		while(!list_empty(&semaphores[n_sem].queue)){	//mentre hi hagin procs bloquejats, els anem alliberant
+			struct list_head *first = list_first(&semaphores[n_sem].queue);
+			list_del(first);
+			struct task_struct *t = list_head_to_task_struct(first);
+			update_process_state_rr(t, &readyqueue);
+		}
+		return 0;
+	}
+	else
+		return -1;
+}
