@@ -36,7 +36,7 @@ struct semaphore {
 	int ownerPID; //PID de l'amo
 	int counter;
 	struct list_head queue;
-
+  int semID;
 };
 
 struct semaphore semaphores[20];

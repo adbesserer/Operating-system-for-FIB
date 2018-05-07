@@ -18,6 +18,7 @@ extern int zeos_ticks;
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
 extern int global_PID;
+extern int global_semID;
 
 // Funcio per agafar l'ebp del pare
 void * get_ebp();
@@ -43,6 +44,15 @@ int sys_ni_syscall()
 /* System call 1: Exit */
 void sys_exit()
 {
+	//alliberar semafors
+	int i;
+  	for (i = 0; i < 20; ++i) {
+    	if (semaphores[i].ownerPID == current()->PID) {
+      		sys_sem_destroy(i);
+    	}
+	}
+	//flag process as dead
+	current()->PID = -1;
 	//no podemos liberar memoria si estamos destruyendo un clon y aun quedan procesos usando el directorio
 	int pos = ((int)get_DIR(current()) - (int)((page_table_entry*) &dir_pages[0]))/sizeof(dir_pages[0]);
 	
@@ -52,9 +62,6 @@ void sys_exit()
 	
 	// free PCB
 	update_process_state_rr(current(),&freequeue); 
-
-	//flag process as dead
-	current()->PID = -1;
 
 	//find next process to executre
 	sched_next_rr();
@@ -226,21 +233,21 @@ int sys_clone(void (*function)(void), void *stack){
 	list_add_tail(&(uChild->task.list), &readyqueue);
 
 	//afegir 1  al contador per aquest directori
-	int pos = ((int)current()-(int)task)/sizeof(union task_union);
+	int pos = ((int)get_DIR(current()) - (int)((page_table_entry*) &dir_pages[0]))/sizeof(dir_pages[0]);
 	dirCounter[pos]++;
 
 	// Modificar pila para el clon
 	//Direccion de memoria de bottom de la pila.
-	void * pilaPadre = &((union task_union *) current())->stack[KERNEL_STACK_SIZE];
-	void * ebpPadre = get_ebp();
-	unsigned int offset =  (pilaPadre - ebpPadre)/4;
-	
 	// volem modificar l'ebp perque apunti a la nova pila.
-	uChild->stack[KERNEL_STACK_SIZE - offset -1] =(unsigned int) stack;
+	uChild->stack[KERNEL_STACK_SIZE - 2] =(unsigned int) stack;
 	// apilar la funcio parametre
-	uChild->stack[KERNEL_STACK_SIZE - offset] =(unsigned int) function;	
-	//modificar kernel stack pointer
-	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE -offset -1];
+	uChild->stack[KERNEL_STACK_SIZE - 5] =(unsigned int) function;	
+		// volem modificar un ebp a 0.
+	uChild->stack[KERNEL_STACK_SIZE - 19] = 0;
+	// apilar el return from fork
+	uChild->stack[KERNEL_STACK_SIZE - 18] = (unsigned int) &ret_from_fork;	
+
+	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE - 19];
 
 	// Encuar el fill a la cua
 	list_add_tail(&(uChild->task.list), &readyqueue);
@@ -287,8 +294,10 @@ int sys_sem_init(int n_sem, unsigned int value)
 	
 	//check correct id
 	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID >= 0) return -EINVAL;
+
 	semaphores[n_sem].ownerPID = current()->PID;
 	semaphores[n_sem].counter = value;
+	semaphores[n_sem].semID = ++global_semID;
 	INIT_LIST_HEAD(&semaphores[n_sem].queue);
 	return 0;
 }
@@ -300,9 +309,11 @@ int sys_sem_wait (int n_sem)
 	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
 	if(semaphores[n_sem].counter <= 0)
 	{
+		int mySemID = semaphores[n_sem].semID;
 		update_process_state_rr(current(), &semaphores[n_sem].queue);
 		sched_next_rr();
-		if(semaphores[n_sem].ownerPID<0)
+		//punt de tornada del bloqueig
+		if(semaphores[n_sem].ownerPID<0 || mySemID != semaphores[n_sem].semID)
 			return -1;
 	}
 	else {
@@ -344,6 +355,7 @@ int sys_sem_destroy (int n_sem)
 			update_process_state_rr(t, &readyqueue);
 		}
 		semaphores[n_sem].ownerPID = -1;
+		semaphores[n_sem].semID = -1;
 		return 0;
 	}
 	else

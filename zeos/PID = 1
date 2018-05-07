@@ -1,0 +1,21 @@
+stat_funcs.c:	struct stats *st = &current()->process_stats;
+stat_funcs.c:	struct stats *st = &current()->process_stats;
+stat_funcs.c:	struct stats *st = &current()->process_stats;
+stat_funcs.c:	struct stats *st = &current()->process_stats;
+sched.c:	stack_swap(&current()->kernel_esp, &(new->task).kernel_esp);
+sched.c:	if(current()->process_stats.remaining_ticks == 0 && !list_empty(&readyqueue)) return 1;
+sched.c:	else if (current()->process_stats.remaining_ticks == 0 && list_empty(&readyqueue))
+sched.c:		current()->process_stats.remaining_ticks = get_quantum(current());
+sched.c:		++(current()->process_stats.total_trans);
+sched.c:	--current()->process_stats.remaining_ticks;
+Binary file core matches
+sys.c:    	if (semaphores[i].ownerPID == current()->PID) {
+sys.c:	current()->PID = -1;
+sys.c:	set_quantum(tChild, current()->quantum);
+sys.c:	set_quantum(tChild, current()->quantum);
+sys.c:	return current()->PID;
+sys.c:	if (pid == current()->PID) 
+sys.c:		copy_to_user(&current()->process_stats, st, sizeof(struct stats));
+sys.c:      		task[i].task.process_stats.remaining_ticks = current()->process_stats.remaining_ticks;
+sys.c:	semaphores[n_sem].ownerPID = current()->PID;
+sys.c:	if(current()->PID == semaphores[n_sem].ownerPID)

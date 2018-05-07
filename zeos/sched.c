@@ -32,6 +32,7 @@ void stack_swap(void * old, void * new);
 
 /* variables externes i globals */
 int global_PID = 2;
+int global_semID=-1;
 // Llistes declarades a un altre fitxer
 extern struct list_head blocked;
 extern struct list_head freequeue;
@@ -159,6 +160,7 @@ void init_task1(void)
   	
   	//	5)  Set  its  page  directory  as  the  current  page  directory  in  the  system,  by  using  the  set_cr3 function (see file mm.c).
   	set_cr3(get_DIR(task1));
+  	set_pe_flag();
  }
 
 void init_sched()
@@ -221,7 +223,7 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dest)
 	   	if (dest != &readyqueue) t->exec_status = ST_BLOCKED;
 		else t->exec_status = ST_READY;
 	}
-	else t->exec_status = ST_RUN;
+	//else t->exec_status = ST_RUN;
 }
 
 int needs_sched_rr()

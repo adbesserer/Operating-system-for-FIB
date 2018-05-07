@@ -26,7 +26,7 @@ main(void)
   	cloneFunc();
   }
 */
-  runjp();
+  runjp_rank(3,3);
   while(1){}
   return 0;
 }
