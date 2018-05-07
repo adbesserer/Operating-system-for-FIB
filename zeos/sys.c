@@ -34,66 +34,33 @@ int ret_from_fork()
 	return 0;
 }
 
+/* System call error: Not defined */
 int sys_ni_syscall()
 {
 	return -ENOSYS;
 }
 
-int sys_getpid()
+/* System call 1: Exit */
+void sys_exit()
 {
-	return current()->PID;
+	//no podemos liberar memoria si estamos destruyendo un clon y aun quedan procesos usando el directorio
+	int pos = ((int)get_DIR(current()) - (int)((page_table_entry*) &dir_pages[0]))/sizeof(dir_pages[0]);
+	
+	// free mem
+	if(--dirCounter[pos] == 0)	
+		free_user_pages(current());
+	
+	// free PCB
+	update_process_state_rr(current(),&freequeue); 
+
+	//flag process as dead
+	current()->PID = -1;
+
+	//find next process to executre
+	sched_next_rr();
 }
 
-int sys_clone(void (*function)(void), void *stack){
-	//- Declarar estructuras auxiliares
-	struct list_head * lChild = NULL;
-	struct task_struct * tChild;
-	union task_union * uChild;
-	
-	// - Buscar un PCB lliure
-	if (list_empty(&freequeue)) return -EAGAIN;
-	lChild = list_first(&freequeue);
-	
-	// - Libera ese PCB de la freequeue, convierte la task en la union
-	list_del(lChild);
-	tChild = list_head_to_task_struct(lChild);
-	uChild = (union task_union *) tChild;
-	copy_data(current(), uChild, sizeof(union task_union));
-
-	// Asignar el nou PID al Child
-	uChild->task.PID = global_PID++;
-
-	// Inicialitzacio de status del fill
-	set_quantum(tChild, current()->quantum);
-	init_stats(&tChild->process_stats);
-	tChild->exec_status = ST_READY;
-	
-	// Encuar el fill a la cua
-	list_add_tail(&(uChild->task.list), &readyqueue);
-
-	//afegir 1  al contador per aquest directori
-	int pos = ((int)current()-(int)task)/sizeof(union task_union);
-	dirCounter[pos]++;
-
-	// Modificar pila para el clon
-	//Direccion de memoria de bottom de la pila.
-	void * pilaPadre = &((union task_union *) current())->stack[KERNEL_STACK_SIZE];
-	void * ebpPadre = get_ebp();
-	unsigned int offset =  (pilaPadre - ebpPadre)/4;
-	
-	// volem modificar l'ebp perque apunti a la nova pila.
-	uChild->stack[KERNEL_STACK_SIZE - offset -1] =(unsigned int) stack;
-	// apilar la funcio parametre
-	uChild->stack[KERNEL_STACK_SIZE - offset] =(unsigned int) function;	
-	//modificar kernel stack pointer
-	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE -offset -1];
-
-		// Encuar el fill a la cua
-	list_add_tail(&(uChild->task.list), &readyqueue);
-	
-	return uChild->task.PID;
-
-}
+/* System call 2: Fork */
 int sys_fork()
 {
 	//- Declarar estructuras auxiliares
@@ -202,24 +169,7 @@ int sys_fork()
 	return uChild->task.PID;
 }
 
-void sys_exit()
-{
-	//no podemos liberar memoria si estamos destruyendo un clon y aun quedan procesos usando el directorio
-	int pos = ((int)current()-(int)task)/sizeof(union task_union);
-	if(--dirCounter[pos]==0){
-		// free mem
-		free_user_pages(current());
-	}
-	// free PCB
-	update_process_state_rr(current(),&freequeue); 
-
-	//flag process as dead
-	current()->PID = -1;
-
-	//find next process to executre
-	sched_next_rr();
-}
-
+/* System call 4: Write */
 int sys_write(int fd, char * buffer, int size)
 {
 	int tmp;
@@ -238,18 +188,81 @@ int sys_write(int fd, char * buffer, int size)
 	return ret;
 }
 
+/* System call 10: Gettime */
 int sys_gettime()
 {
 	return zeos_ticks;
 }
 
-int sys_get_stats(int pid, struct stats *st) {
+/* System call 19: Clone */
+int sys_clone(void (*function)(void), void *stack){
+	if (!access_ok(VERIFY_WRITE, stack, 4) || !access_ok(VERIFY_READ, function, 4)){
+		return -EFAULT;
+	}
+	//- Declarar estructuras auxiliares
+	struct list_head * lChild = NULL;
+	struct task_struct * tChild;
+	union task_union * uChild;
+	
+	// - Buscar un PCB lliure
+	if (list_empty(&freequeue)) return -EAGAIN;
+	lChild = list_first(&freequeue);
+	
+	// - Libera ese PCB de la freequeue, convierte la task en la union
+	list_del(lChild);
+	tChild = list_head_to_task_struct(lChild);
+	uChild = (union task_union *) tChild;
+	copy_data(current(), uChild, sizeof(union task_union));
+
+	// Asignar el nou PID al Child
+	uChild->task.PID = global_PID++;
+
+	// Inicialitzacio de status del fill
+	set_quantum(tChild, current()->quantum);
+	init_stats(&tChild->process_stats);
+	tChild->exec_status = ST_READY;
+	
+	// Encuar el fill a la cua
+	list_add_tail(&(uChild->task.list), &readyqueue);
+
+	//afegir 1  al contador per aquest directori
+	int pos = ((int)current()-(int)task)/sizeof(union task_union);
+	dirCounter[pos]++;
+
+	// Modificar pila para el clon
+	//Direccion de memoria de bottom de la pila.
+	void * pilaPadre = &((union task_union *) current())->stack[KERNEL_STACK_SIZE];
+	void * ebpPadre = get_ebp();
+	unsigned int offset =  (pilaPadre - ebpPadre)/4;
+	
+	// volem modificar l'ebp perque apunti a la nova pila.
+	uChild->stack[KERNEL_STACK_SIZE - offset -1] =(unsigned int) stack;
+	// apilar la funcio parametre
+	uChild->stack[KERNEL_STACK_SIZE - offset] =(unsigned int) function;	
+	//modificar kernel stack pointer
+	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE -offset -1];
+
+	// Encuar el fill a la cua
+	list_add_tail(&(uChild->task.list), &readyqueue);
+	
+	return uChild->task.PID;
+}
+
+/* System call 20: Getpid */
+int sys_getpid()
+{
+	return current()->PID;
+}
+
+/* System call 35: Get_stats */
+int sys_get_stats(int pid, struct stats *st) 
+{
   //Nomes tenim dos estats per el que busquem nomes a ready o al current
 	if (pid < 0) return -EINVAL;
 	if (st == NULL) return -EFAULT;
 	if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT; 
 	if (pid == current()->PID) 
-	{
+	{      		
 		copy_to_user(&current()->process_stats, st, sizeof(struct stats));
 		return 0;
 	}
@@ -265,57 +278,74 @@ int sys_get_stats(int pid, struct stats *st) {
 	return -ESRCH;
 }
 
-int sys_sem_init(int n_sem, unsigned int value){	//1:id of sem, 2: intitial value of counter
+/* Semaphore functions */
+/* System call 21:  Sem_init */
+int sys_sem_init(int n_sem, unsigned int value)
+{	
+	//1:id of sem, 2: intitial value of counter
 	printk("init\n");
+	
 	//check correct id
-	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID >= 0) return -1;
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID >= 0) return -EINVAL;
 	semaphores[n_sem].ownerPID = current()->PID;
 	semaphores[n_sem].counter = value;
 	INIT_LIST_HEAD(&semaphores[n_sem].queue);
 	return 0;
 }
 
-int sys_sem_wait (int n_sem){
-		printk("wait\n");
-	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -1;
-	if(semaphores[n_sem].counter <= 0){
-		printk("a la cola");
+/* System call 22:  Sem_wait */
+int sys_sem_wait (int n_sem)
+{
+	printk("wait\n");
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
+	if(semaphores[n_sem].counter <= 0)
+	{
 		update_process_state_rr(current(), &semaphores[n_sem].queue);
 		sched_next_rr();
+		if(semaphores[n_sem].ownerPID<0)
+			return -1;
 	}
-	else{
+	else {
 		--semaphores[n_sem].counter;
 	}
 	return 0;
 }
-int sys_sem_signal (int n_sem){
-		printk("signal\n");
-	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -1;
-	if(list_empty(&semaphores[n_sem].queue)){
+
+
+/* System call 23:  Sem_signal */
+int sys_sem_signal (int n_sem)
+{
+	printk("signal\n");
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
+	if(list_empty(&semaphores[n_sem].queue)) {
 		++semaphores[n_sem].counter;
 	}
-	else{
+	else {
 		struct list_head *first = list_first(&semaphores[n_sem].queue);
-		list_del(first);
+		//list_del(first);
 		struct task_struct *t = list_head_to_task_struct(first);
 		update_process_state_rr(t, &readyqueue);
 	}
 	return 0;
-
 }
-int sys_sem_destroy (int n_sem){
+
+
+/* System call 24:  Sem_destroy */
+int sys_sem_destroy (int n_sem)
+{
 	printk("destroy\n");
-	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -1;
-	if(current()->PID == semaphores[n_sem].ownerPID){	//nomès si sóc l'amo del semafor el puc matar
-		semaphores[n_sem].ownerPID = -1;
-		while(!list_empty(&semaphores[n_sem].queue)){	//mentre hi hagin procs bloquejats, els anem alliberant
+	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
+	if(current()->PID == semaphores[n_sem].ownerPID)
+	{	//nomès si sóc l'amo del semafor el puc matar
+		while(!list_empty(&semaphores[n_sem].queue))
+		{	//mentre hi hagin procs bloquejats, els anem alliberant
 			struct list_head *first = list_first(&semaphores[n_sem].queue);
-			list_del(first);
 			struct task_struct *t = list_head_to_task_struct(first);
 			update_process_state_rr(t, &readyqueue);
 		}
+		semaphores[n_sem].ownerPID = -1;
 		return 0;
 	}
 	else
-		return -1;
+		return -EPERM;
 }

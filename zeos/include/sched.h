@@ -40,7 +40,7 @@ struct semaphore {
 };
 
 struct semaphore semaphores[20];
-
+extern int dirCounter[NR_TASKS];
 extern union task_union protected_tasks[NR_TASKS+2];
 extern union task_union *task; /* Vector de tasques */
 extern struct task_struct *idle_task;

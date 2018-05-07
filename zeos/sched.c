@@ -31,11 +31,12 @@ void stack_swap(void * old, void * new);
 #define DEFAULT_QUANTUM 10
 
 /* variables externes i globals */
-extern struct list_head blocked;
+int global_PID = 2;
 // Llistes declarades a un altre fitxer
+extern struct list_head blocked;
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
-int global_PID = 2;
+
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t) 
@@ -50,21 +51,35 @@ page_table_entry * get_PT (struct task_struct *t)
 }
 
 /* Allocation of directory for a task struct.*/
+
 int allocate_DIR(struct task_struct *t) 
 {
 	int i;
 
-	for(i=0; i!=NR_TASKS; ++i){
-		if(dirCounter[i]==0){	//free dir entry at i
+	for(i = 0; i != NR_TASKS; ++i){
+		if(dirCounter[i] == 0){	//free dir entry at i
 			t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[i];
 			dirCounter[i]++;
 			return 1;
 		}
 	}
-
 	return -ENOMEM;
 }
 
+
+/* Allocation of directory for a task struct.*/
+/*
+int allocate_DIR(struct task_struct *t) 
+{
+	int pos;
+
+	pos = ((int)t-(int)task)/sizeof(union task_union);
+
+	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
+
+	return 1;
+}
+*/
 /* Code of cpu_idle function. */
 void cpu_idle(void)
 {
@@ -77,7 +92,8 @@ void cpu_idle(void)
 }
 
 /* Initialization of statistical data */
-void init_stats(struct stats *s){
+void init_stats(struct stats *s)
+{
 	s->user_ticks = 0;
 	s->system_ticks = 0;
 	s->blocked_ticks = 0;
@@ -103,7 +119,7 @@ void init_idle (void)
 	idle_task->quantum = DEFAULT_QUANTUM;
 	init_stats(&idle_task->process_stats);
 
-	//	3)  Initialize field dir_pages_baseAddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
+	//	3)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
 	allocate_DIR(idle_task);
 	
 	//	4)  Initialize  an  execution  context  for  the  procees  to  restore  it  when  it  gets  assigned  the  cpu (see section 4.5) and executes cpu_idle.
@@ -145,13 +161,10 @@ void init_task1(void)
   	set_cr3(get_DIR(task1));
  }
 
-void init_sched(){
-	//init semaphores
-	int i;
-	for (i = 0; i != 20; ++i){
-		semaphores[i].ownerPID = -1;
-	}
-	//init lists
+void init_sched()
+{
+	int i;                                          
+	for (i = 0; i != 20; ++i) semaphores[i].ownerPID = -1;     
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
 	INIT_LIST_HEAD(&blocked);
@@ -192,12 +205,10 @@ void sched_next_rr()
 		tTmp = list_head_to_task_struct(lTmp);
  	 }
  	else tTmp = idle_task;
- 	
 	tTmp->process_stats.remaining_ticks = get_quantum(tTmp);
 	sys_to_process_stats(tTmp);
-  	if (tTmp->exec_status == ST_RUN || tTmp->exec_status == ST_BLOCKED) ++(tTmp->process_stats.total_trans);
+  	++(tTmp->process_stats.total_trans);
 	tTmp->exec_status = ST_RUN;
-	
   	task_switch_asm((union task_union*)tTmp);
 }
 
@@ -219,6 +230,8 @@ int needs_sched_rr()
 	else if (current()->process_stats.remaining_ticks == 0 && list_empty(&readyqueue))
 	{
 		current()->process_stats.remaining_ticks = get_quantum(current());
+		++(current()->process_stats.total_trans);
+
 	}
 	return 0;
 }
@@ -241,6 +254,7 @@ void set_quantum (struct task_struct *t, int new_quantum)
 {
 	t->quantum = new_quantum;
 }
+
 int get_quantum (struct task_struct *t)
 {
 	return t->quantum;

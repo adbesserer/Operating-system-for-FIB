@@ -34,14 +34,6 @@ ENTRY(get_ebp) # function to get the current ebp
 	movl %ebp, %eax;
 	ret
 
-# ENTRY(change_esp) # changes esp to the parameter passed and pop ebp
-#	movl 8(%ebp), %esp;
-#	ret
-
-# ENTRY(pop_my_ebp)
-#	popl %ebp;
-#	ret
-
 ENTRY(stack_swap)
 	pushl %ebp
 	movl %esp, %ebp

@@ -207,6 +207,7 @@ fin_get_stats:
 fin_clone:
  ret
 
+
 .globl sem_init; .type sem_init, @function; .align 0; sem_init:
 
  pushl %ebp;
@@ -243,6 +244,7 @@ fin_clone:
 fin_sem_init:
  ret
 
+
   .globl sem_wait; .type sem_wait, @function; .align 0; sem_wait:
 
  pushl %ebp;
@@ -278,6 +280,7 @@ fin_sem_init:
 fin_sem_wait:
  ret
 
+
   .globl sem_signal; .type sem_signal, @function; .align 0; sem_signal:
 
  pushl %ebp;
@@ -312,6 +315,7 @@ fin_sem_wait:
 
 fin_sem_signal:
  ret
+
 
   .globl sem_destroy; .type sem_destroy, @function; .align 0; sem_destroy:
 

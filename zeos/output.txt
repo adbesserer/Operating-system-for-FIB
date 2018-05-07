@@ -1,0 +1,81 @@
+gcc -m32 -E -Iinclude -traditional bootsect.S -o bootsect.s
+as86 -0 -a -o bootsect.o bootsect.s
+ld86 -0 -s -o bootsect bootsect.o
+gcc -m32 -E -Iinclude -o task_switch_asm.s task_switch_asm.S
+as --32   -o task_switch_asm.o task_switch_asm.s
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o interrupt.o interrupt.c
+gcc -m32 -E -Iinclude -o entry.s entry.S 
+as --32   -o entry.o entry.s
+gcc -m32 -E -Iinclude -o sys_call_table.s sys_call_table.S
+as --32   -o sys_call_table.o sys_call_table.s
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o io.o io.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o sched.o sched.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o sys.o sys.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o mm.o mm.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o devices.o devices.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o utils.o utils.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o hardware.o hardware.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o list.o list.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o stat_funcs.o stat_funcs.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o system.o system.c
+ld -melf_i386 -g -T system.lds -o system system.o task_switch_asm.o interrupt.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o  stat_funcs.o -L . -l zeos -l auxjp 
+gcc -Wall -Wstrict-prototypes -g -o build build.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o user.o user.c
+gcc -m32 -O2 -g  -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude   -c -o libc.o libc.c
+gcc -m32 -E -Iinclude -o wrappers.s wrappers.S
+as --32   -o wrappers.o wrappers.s
+ld -melf_i386 -g -T user.lds -o user user.o libc.o wrappers.o libjp.a
+objcopy -O binary -R .note -R .comment -S system system.out
+objcopy -O binary -R .note -R .comment -S user user.out
+./build bootsect system.out user.out > zeos.bin
+bochs -q -f .bochsrc
+========================================================================
+                       Bochs x86 Emulator 2.6.7
+              Built from SVN snapshot on November 2, 2014
+                  Compiled on Jun 28 2017 at 12:46:11
+========================================================================
+Kernel Loaded!    Entering user mode...
+(II) Initializing semaphores..OK
+(II) Initializing Backdoor..OK
+
+
+-->Running 32 Tests: deliver 2 <--
+* Running Test [0] : [testGetPID] TEST GETPID-- result OK
+* Running Test [1] : [testNiceRes] CHECK NICE RESULT-- result OK
+* Running Test [2] : [testMemP0] TEST PHYSICAL MEMORY INITIALIZATION P1-- result OK
+* Running Test [3] : [testGetStatsCurrent] GET_STATS(pid is current process)
+If you see this message twice, double check the return value of the 'fork' system call
+-- result OK
+* Running Test [4] : [testAccountCS] GET_STATS accounts context switches
+  Block once
+  Block twice
+
+Previous Ready->Run transitions = 2
+Final Ready->Run transitions    = 4
+-- result OK
+* Running Test [5] : [testAccountCSwoBlock] GET_STATS accounts context switches without blocking 
+Waiting a context switch...
+
+Current Ready->Run transitions: 4; Remain quantum: 10
+Looping until Context Switch...
+
+Final Ready->Run transitions: 5; Remain quantum: 10; Iterations: 5341/1000000
+-- result OK
+* Running Test [6] : [testTicsAccountingRemaining] GET_STATS DECREASING REMAINING TICKS FOR RUNNING PROCESSES
+Waiting for a change in the remaining quantum
+
+Current remaining quantum value = 10
+Looping until change in Remaining quantum...
+Final remaining quantum value   = 9; Iterations= 318/1000000
+-- result OK
+* Running Test [7] : [testFatherResultFork] FORK FATHER RESULT-- result OK
+* Running Test [8] : [testChildResultFork] FORK CHILD RESULT-- result OK
+* Running Test [9] : [testForkInheritQuantum] FORK INHERIT QUANTUM-- result OK
+* Running Test [10] : [testForkResetStats] FORK RESET STATS-- result OK
+* Running Test [11] : [testTicsAccountingRunning] GET_STATS INCREASING TICKS FOR RUNNING PROCESSES-- result OK
+* Running Test [12] : [testNiceFunctionality] NICE EFFECTS ON SCHEDULING-- result OK
+* Running Test [13] : [testCopyGlobalMemory1] FORK DATA COPY: INHERIT AND DO NOT SHARE WITH FATHER)-- result OK
+* Running Test [14] : [testCopyGlobalMemory2] FORK DATA COPY: INHERIT AND DO NOT SHARE WITH BROTHERS-- result OK
+* Running Test [15] : [testForkHierarchy] FORK PROCESS HIERARCHY CREATION
+Page fault
+Makefile:103: recipe for target 'emul' failed

@@ -31,14 +31,6 @@
  movl %ebp, %eax;
  ret
 
-# .globl change_esp; .type change_esp, @function; .align 0; change_esp: # changes esp to the parameter passed and pop ebp
-# movl 8(%ebp), %esp;
-# ret
-
-# .globl pop_my_ebp; .type pop_my_ebp, @function; .align 0; pop_my_ebp:
- # popl %ebp;
-# ret
-
 .globl stack_swap; .type stack_swap, @function; .align 0; stack_swap:
  pushl %ebp
  movl %esp, %ebp

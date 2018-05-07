@@ -200,6 +200,7 @@ ENTRY(clone)
 fin_clone:
 	ret
 
+
 ENTRY(sem_init)
 	/* dynamic link */
 	pushl %ebp;
@@ -236,6 +237,7 @@ ENTRY(sem_init)
 fin_sem_init:
 	ret
 
+
   ENTRY(sem_wait)
 	/* dynamic link */
 	pushl %ebp;
@@ -271,6 +273,7 @@ fin_sem_init:
 fin_sem_wait:
 	ret
 
+
   ENTRY(sem_signal)
 	/* dynamic link */
 	pushl %ebp;
@@ -305,6 +308,7 @@ fin_sem_wait:
 
 fin_sem_signal:
 	ret
+
 
   ENTRY(sem_destroy)
 	/* dynamic link */
