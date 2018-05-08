@@ -20,6 +20,8 @@ extern struct list_head readyqueue;
 extern int global_PID;
 extern int global_semID;
 
+int sys_sem_destroy (int n_sem); //header para evitar warning producido por sys_exit
+
 // Funcio per agafar l'ebp del pare
 void * get_ebp();
 
@@ -285,7 +287,6 @@ int sys_get_stats(int pid, struct stats *st)
 int sys_sem_init(int n_sem, unsigned int value)
 {	
 	//1:id of sem, 2: intitial value of counter
-	printk("init\n");
 	
 	//check correct id
 	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID >= 0) return -EINVAL;
@@ -300,7 +301,6 @@ int sys_sem_init(int n_sem, unsigned int value)
 /* System call 22:  Sem_wait */
 int sys_sem_wait (int n_sem)
 {
-	printk("wait\n");
 	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
 	if(semaphores[n_sem].counter <= 0)
 	{
@@ -321,7 +321,6 @@ int sys_sem_wait (int n_sem)
 /* System call 23:  Sem_signal */
 int sys_sem_signal (int n_sem)
 {
-	printk("signal\n");
 	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
 	if(list_empty(&semaphores[n_sem].queue)) {
 		++semaphores[n_sem].counter;
@@ -339,7 +338,6 @@ int sys_sem_signal (int n_sem)
 /* System call 24:  Sem_destroy */
 int sys_sem_destroy (int n_sem)
 {
-	printk("destroy\n");
 	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID < 0) return -EINVAL;
 	if(current()->PID == semaphores[n_sem].ownerPID)
 	{	//nomès si sóc l'amo del semafor el puc matar
