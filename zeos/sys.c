@@ -237,8 +237,6 @@ int sys_clone(void (*function)(void), void *stack){
 	dirCounter[pos]++;
 
 	// Modificar pila para el clon
-	//Direccion de memoria de bottom de la pila.
-	// volem modificar l'ebp perque apunti a la nova pila.
 	uChild->stack[KERNEL_STACK_SIZE - 2] =(unsigned int) stack;
 	// apilar la funcio parametre
 	uChild->stack[KERNEL_STACK_SIZE - 5] =(unsigned int) function;	
@@ -248,9 +246,6 @@ int sys_clone(void (*function)(void), void *stack){
 	uChild->stack[KERNEL_STACK_SIZE - 18] = (unsigned int) &ret_from_fork;	
 
 	uChild->task.kernel_esp = &uChild->stack[KERNEL_STACK_SIZE - 19];
-
-	// Encuar el fill a la cua
-	list_add_tail(&(uChild->task.list), &readyqueue);
 	
 	return uChild->task.PID;
 }

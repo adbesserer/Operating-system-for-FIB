@@ -170,7 +170,7 @@ void init_sched()
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
 	INIT_LIST_HEAD(&blocked);
-	for (i = 0; i < NR_TASKS; ++i) list_add(&task[i].task.list, &freequeue);
+	for (i = 0; i < NR_TASKS; ++i) list_add_tail(&task[i].task.list, &freequeue);
 }
 
 struct task_struct* current()
@@ -206,7 +206,8 @@ void sched_next_rr()
     	list_del(lTmp);
 		tTmp = list_head_to_task_struct(lTmp);
  	 }
- 	else tTmp = idle_task;
+ 	else 
+ 		tTmp = idle_task;
 	tTmp->process_stats.remaining_ticks = get_quantum(tTmp);
 	sys_to_process_stats(tTmp);
   	++(tTmp->process_stats.total_trans);
