@@ -30,12 +30,10 @@ int sys_write_console(char *buffer,int size)
 //funciones de acceso al circular buffer
 int sys_read_keyboard(char* buff, int n){	//take n chars from the circbuffer
 	//if there are processes blocked, go to the end of the queue
-	if(!list_empty(&keyboardqueue)){
+	if(!list_empty(&keyboardqueue) || lastWritten==lastRead){
 		block(current(),&keyboardqueue);
 		sched_next_rr();
 	}
-	if(lastWritten==lastRead)//nothing to read
-		return 0;
 	int i = 0; //i = how many chars have been read
 	while(lastRead != lastWritten && i < n){
 		if(buff[i] == NULL) 	return -EFAULT;
@@ -49,7 +47,6 @@ int sys_read_keyboard(char* buff, int n){	//take n chars from the circbuffer
 		block(current(),&keyboardqueue);
 		sched_next_rr();
 		while(lastRead != lastWritten && i < n){
-			printk(i);
 			if(buff[i] == NULL) 	return -EFAULT;
 			buff[i++] = circBuffer[lastRead++];
 			if(lastRead == N) 	lastRead = 0; //if we get to the end we start again
