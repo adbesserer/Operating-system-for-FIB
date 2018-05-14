@@ -44,6 +44,42 @@
 fin_write:
  ret
 
+.globl read; .type read, @function; .align 0; read:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ pushl %ebx;
+
+
+
+ movl 8(%ebp), %ebx;
+ movl 12(%ebp), %ecx;
+ movl 16(%ebp), %edx;
+
+
+
+ movl $3, %eax;
+ int $0x80;
+
+
+
+ popl %ebx;
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_read
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+
+fin_read:
+ ret
 
 .globl gettime; .type gettime, @function; .align 0; gettime:
 

@@ -7,6 +7,7 @@
 #include <hardware.h>
 #include <io.h>
 #include <sched.h>
+#include <devices.h>
 
 #include <zeos_interrupt.h>
 
@@ -113,7 +114,8 @@ void keyboard_routine()
 		//Control key
 		if (tmp == '\0') printc_xy(0,0, 'C');
 		//Representable character
-		else printc_xy(0,0, tmp);
+		//else printc_xy(0,0, tmp);
+		else putC(tmp);	//escribirlo en el circularbuffer
 	}
 	//Else break
 }

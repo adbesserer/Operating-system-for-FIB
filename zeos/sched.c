@@ -37,6 +37,7 @@ int global_semID=-1;
 extern struct list_head blocked;
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+extern struct list_head keyboardqueue;
 
 
 /* get_DIR - Returns the Page Directory address for task 't' */
@@ -261,4 +262,17 @@ void set_quantum (struct task_struct *t, int new_quantum)
 int get_quantum (struct task_struct *t)
 {
 	return t->quantum;
+}
+
+void unblock(struct task_struct *t){
+	list_del(&(t->list));
+	list_add_tail(&(t->list), &readyqueue);
+	sys_to_ready_stats();
+	t->exec_status = ST_READY;
+}
+void block(struct task_struct *t, struct list_head *dest){
+	if (t->exec_status != ST_RUN) list_del(&(t->list));
+	list_add_tail(&(t->list),dest);
+	sys_to_ready_stats();
+	t->exec_status = ST_BLOCKED;
 }

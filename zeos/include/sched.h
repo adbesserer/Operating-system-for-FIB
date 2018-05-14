@@ -85,6 +85,8 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
 void schedule();
+void unblock(struct task_struct *t);
+void block(struct task_struct *t, struct list_head *dest);
 
 /* Quantum related functions */
 int get_quantum (struct task_struct *t);

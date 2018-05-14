@@ -37,6 +37,42 @@ ENTRY(write)
 fin_write:
 	ret
 
+ENTRY(read)
+	/* dynamic link */
+	pushl %ebp;
+	movl %esp, %ebp;
+	/* dynamic link */
+	
+	/*save registers to be used, typically eax, ebx, ecx */
+	pushl %ebx;
+	/*registers saved*/
+	
+	/*recover parameters*/
+	movl 8(%ebp), %ebx; 	/*fd*/
+	movl 12(%ebp), %ecx; 	/*buffer*/
+	movl 16(%ebp), %edx; 	/*count*/
+	/*recovered parameters*/
+	
+	/* interrupt generation*/
+	movl $3, %eax;
+	int $0x80;
+	/* interrupt generation done */
+	
+	/*recover context*/
+	popl %ebx;
+	popl %ebp;
+	/*recovered context*/
+	
+	/*manage error/result*/
+	cmpl $0, %eax;
+	jge fin_read
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+	/*managed error/result*/
+	
+fin_read:
+	ret
 
 ENTRY(gettime)
 	/* dynamic link */

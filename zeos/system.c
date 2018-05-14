@@ -17,6 +17,7 @@
 int zeos_ticks;
 struct list_head freequeue;
 struct list_head readyqueue;
+struct list_head keyboardqueue;
 struct task_struct * idle_task;
 
 int (*usr_main)(void) = (void *) PH_USER_START;

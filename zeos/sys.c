@@ -17,6 +17,7 @@
 extern int zeos_ticks;
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+extern struct list_head keyboardqueue;
 extern int global_PID;
 extern int global_semID;
 
@@ -25,11 +26,13 @@ int sys_sem_destroy (int n_sem); //header para evitar warning producido por sys_
 // Funcio per agafar l'ebp del pare
 void * get_ebp();
 
+
 int check_fd(int fd, int permissions)
 {
-	if (fd != 1) return -EBADF;
-	if (permissions != ESCRIPTURA) return -EACCES;
-	return 0;
+  if (fd>1 || fd<0) return -EBADF;
+  if (fd==1 && permissions!=ESCRIPTURA) return -EACCES;
+  else if (fd==0 && permissions != LECTURA) return -EACCES;
+  return 0;
 }
 
 int ret_from_fork()
@@ -177,7 +180,22 @@ int sys_fork()
 	
 	return uChild->task.PID;
 }
+int sys_read ( int fd, char *buf,int count)//read()  attempts to read up to ’count’ bytes from file descriptor ’fd’ into the buffer starting at ’buf’.
+{
+	int tmp;
+	tmp = check_fd(fd, LECTURA);
+	if (tmp < 0) return tmp;
+	if (buf == NULL) return -EFAULT;
+	if (count < 0) return -EINVAL;
 
+	char bufferTmp[count];
+	tmp = sys_read_keyboard(bufferTmp,count);
+	if(tmp < 0) return tmp;
+	//si hemos podido leer del circbuffer, pasamos el contenido a usuario y retornamos tmp
+	copy_to_user(bufferTmp,buf,tmp);
+	return tmp;
+
+}
 /* System call 4: Write */
 int sys_write(int fd, char * buffer, int size)
 {
@@ -289,7 +307,8 @@ int sys_sem_init(int n_sem, unsigned int value)
 	//1:id of sem, 2: intitial value of counter
 	
 	//check correct id
-	if(n_sem < 0 || n_sem > 19 || semaphores[n_sem].ownerPID >= 0) return -EINVAL;
+	if(n_sem < 0 || n_sem > 19) return -EINVAL;
+	if(semaphores[n_sem].ownerPID >= 0)return -EBUSY;
 
 	semaphores[n_sem].ownerPID = current()->PID;
 	semaphores[n_sem].counter = value;
@@ -305,7 +324,7 @@ int sys_sem_wait (int n_sem)
 	if(semaphores[n_sem].counter <= 0)
 	{
 		int mySemID = semaphores[n_sem].semID;
-		update_process_state_rr(current(), &semaphores[n_sem].queue);
+		block(current(), &semaphores[n_sem].queue);
 		sched_next_rr();
 		//punt de tornada del bloqueig
 		if(semaphores[n_sem].ownerPID<0 || mySemID != semaphores[n_sem].semID)
@@ -329,7 +348,7 @@ int sys_sem_signal (int n_sem)
 		struct list_head *first = list_first(&semaphores[n_sem].queue);
 		//list_del(first);
 		struct task_struct *t = list_head_to_task_struct(first);
-		update_process_state_rr(t, &readyqueue);
+		unblock(t);
 	}
 	return 0;
 }
@@ -345,7 +364,7 @@ int sys_sem_destroy (int n_sem)
 		{	//mentre hi hagin procs bloquejats, els anem alliberant
 			struct list_head *first = list_first(&semaphores[n_sem].queue);
 			struct task_struct *t = list_head_to_task_struct(first);
-			update_process_state_rr(t, &readyqueue);
+			unblock(t);
 		}
 		semaphores[n_sem].ownerPID = -1;
 		semaphores[n_sem].semID = -1;
