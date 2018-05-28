@@ -30,8 +30,8 @@ void * get_ebp();
 int check_fd(int fd, int permissions)
 {
   if (fd>1 || fd<0) return -EBADF;
-  if (fd==1 && permissions!=ESCRIPTURA) return -EACCES;
-  else if (fd==0 && permissions != LECTURA) return -EACCES;
+  if (fd==1 && permissions!=ESCRIPTURA) return -EBADF;
+  else if (fd==0 && permissions != LECTURA) return -EBADF;
   return 0;
 }
 
@@ -180,10 +180,12 @@ int sys_fork()
 	
 	return uChild->task.PID;
 }
+
 int sys_read ( int fd, char *buf,int count)//read()  attempts to read up to ’count’ bytes from file descriptor ’fd’ into the buffer starting at ’buf’.
 {
 	int tmp;
 	tmp = check_fd(fd, LECTURA);
+	if (!access_ok(VERIFY_WRITE, buf, count)) return -EFAULT;
 	if (tmp < 0) return tmp;
 	if (buf == NULL) return -EFAULT;
 	if (count < 0) return -EINVAL;
@@ -196,6 +198,7 @@ int sys_read ( int fd, char *buf,int count)//read()  attempts to read up to ’c
 	return tmp;
 
 }
+
 /* System call 4: Write */
 int sys_write(int fd, char * buffer, int size)
 {

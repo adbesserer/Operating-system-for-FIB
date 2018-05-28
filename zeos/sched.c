@@ -207,7 +207,7 @@ void sched_next_rr()
 		lTmp = list_first(&readyqueue);
     	list_del(lTmp);
 		tTmp = list_head_to_task_struct(lTmp);
- 	 }
+ 	}
  	else 
  		tTmp = idle_task;
 	tTmp->process_stats.remaining_ticks = get_quantum(tTmp);
@@ -226,7 +226,6 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dest)
 	   	if (dest != &readyqueue) t->exec_status = ST_BLOCKED;
 		else t->exec_status = ST_READY;
 	}
-	//else t->exec_status = ST_RUN;
 }
 
 int needs_sched_rr()
@@ -267,7 +266,7 @@ int get_quantum (struct task_struct *t)
 
 void unblock(struct task_struct *t){
 	list_del(&(t->list));
-	list_add_tail(&(t->list), &readyqueue);
+	list_add(&(t->list), &readyqueue);
 	sys_to_ready_stats();
 	t->exec_status = ST_READY;
 }

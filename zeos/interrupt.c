@@ -17,6 +17,12 @@ void clock_handler();
 void system_call_handler();
 
 extern int zeos_ticks;
+extern int lastWritten;
+extern int lastRead;
+extern int leftToRead;
+extern struct list_head keyboardqueue;
+int charsInCirc();
+int cbfull();
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -116,6 +122,14 @@ void keyboard_routine()
 		//Representable character
 		//else printc_xy(0,0, tmp);
 		else putC(tmp);	//escribirlo en el circularbuffer
+
+		if(cbfull() || leftToRead >= charsInCirc()){
+			if(!list_empty(&keyboardqueue)){
+				struct list_head *first = list_first(&keyboardqueue);
+				struct task_struct *t = list_head_to_task_struct(first);
+				unblock(t);
+			}
+		}
 	}
 	//Else break
 }
