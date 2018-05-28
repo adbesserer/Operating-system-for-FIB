@@ -22,7 +22,7 @@
  .long sys_ni_syscall
  .long sys_gettime
  .long sys_ni_syscall
- .long sys_ni_syscall
+ .long sys_sbrk
  .long sys_ni_syscall
  .long sys_ni_syscall
  .long sys_ni_syscall

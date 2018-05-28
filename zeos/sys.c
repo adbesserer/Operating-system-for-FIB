@@ -72,6 +72,25 @@ void sys_exit()
 	sched_next_rr();
 }
 
+
+void *sys_sbrk(int increment){
+	int f;
+	task_struct * t = current();
+	if(t->heap == NULL){
+		if(increment < 0) return -ENOMEM; //potser no es error
+		f = alloc_frame();
+		if(f < 0 ) return -ENOMEM;
+		page_table_entry * PT = get_PT(t);
+		set_ss_pag(PT,HEAP_INIT_PAGE, f);
+		t->heap = HEAP_INIT_PAGE;
+		if(increment <= PAGE_SIZE)
+			t->heapSize = increment;
+		return t->heap+t->heapSize;
+	}
+	if(increment == 0) return t->heap+t->heapSize;
+
+
+}
 /* System call 2: Fork */
 int sys_fork()
 {

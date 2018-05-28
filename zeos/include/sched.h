@@ -25,6 +25,9 @@ struct task_struct {
   enum state_t exec_status;
   struct stats process_stats;
   int quantum;
+
+  void *heap;
+  int heapSize; //BYTES
 };
 
 union task_union {

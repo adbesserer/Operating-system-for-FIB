@@ -15,7 +15,7 @@
 void keyboard_handler(); // <- Comes from Entry.S handler.
 void clock_handler();
 void system_call_handler();
-
+void sched_next_rr();
 extern int zeos_ticks;
 extern int lastWritten;
 extern int lastRead;
@@ -128,6 +128,7 @@ void keyboard_routine()
 				struct list_head *first = list_first(&keyboardqueue);
 				struct task_struct *t = list_head_to_task_struct(first);
 				unblock(t);
+        sched_next_rr();
 			}
 		}
 	}

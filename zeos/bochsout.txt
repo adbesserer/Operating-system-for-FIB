@@ -31,7 +31,7 @@
 00000000000i[      ]   SB16 support: no
 00000000000i[      ]   USB support: no
 00000000000i[      ]   VGA extension support: vbe
-00000000000i[MEM0  ] allocated memory at 0x7f9374486010. after alignment, vector=0x7f9374487000
+00000000000i[MEM0  ] allocated memory at 0x7f4c0bb13010. after alignment, vector=0x7f4c0bb14000
 00000000000i[MEM0  ] 16,00MB
 00000000000i[MEM0  ] mem block size = 0x00100000, blocks=16
 00000000000i[MEM0  ] rom at 0xfffe0000/131072 ('/opt/bochs_gdb/share/bochs/BIOS-bochs-latest')
@@ -41,7 +41,7 @@
 00000000000i[DEV   ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
 00000000000i[PLUGIN] init_dev of 'cmos' plugin device by virtual method
 00000000000i[CMOS  ] Using local time for initial clock
-00000000000i[CMOS  ] Setting initial clock to: Mon May 28 17:36:43 2018 (time0=1527521803)
+00000000000i[CMOS  ] Setting initial clock to: Mon May 28 18:17:31 2018 (time0=1527524251)
 00000000000i[PLUGIN] init_dev of 'dma' plugin device by virtual method
 00000000000i[DMA   ] channel 4 used by cascade
 00000000000i[PLUGIN] init_dev of 'pic' plugin device by virtual method
@@ -175,27 +175,27 @@
 00031023412i[FLOPPY] read() on floppy image returns 0
 00031067856i[FLOPPY] read() on floppy image returns 0
 00031112300i[FLOPPY] read() on floppy image returns 0
-00032554940i[XGUI  ] charmap update. Font Height is 16
-02959880421p[      ] >>PANIC<< SIGNAL 2 caught
-02959880421i[CPU0  ] CPU is in protected mode (active)
-02959880421i[CPU0  ] CS.mode = 32 bit
-02959880421i[CPU0  ] SS.mode = 32 bit
-02959880421i[CPU0  ] EFER   = 0x00000000
-02959880421i[CPU0  ] | EAX=00000000  EBX=00001380  ECX=00108cb9  EDX=00000001
-02959880421i[CPU0  ] | ESP=0011bfe0  EBP=0011bfe8  ESI=000e0200  EDI=00003ff4
-02959880421i[CPU0  ] | IOPL=0 id vip vif ac vm rf nt of df IF tf sf zf af PF cf
-02959880421i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
-02959880421i[CPU0  ] |  CS:0023( 0004| 0|  3) 00000000 ffffffff 1 1
-02959880421i[CPU0  ] |  DS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
-02959880421i[CPU0  ] |  SS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
-02959880421i[CPU0  ] |  ES:002b( 0005| 0|  3) 00000000 ffffffff 1 1
-02959880421i[CPU0  ] |  FS:0000( 0000| 0|  0) 00000000 00000000 0 0
-02959880421i[CPU0  ] |  GS:0000( 0000| 0|  0) 00000000 00000000 0 0
-02959880421i[CPU0  ] | EIP=00100016 (00100016)
-02959880421i[CPU0  ] | CR0=0x80000011 CR2=0x00000000
-02959880421i[CPU0  ] | CR3=0x0002d000 CR4=0x00000000
-02959880421i[CPU0  ] 0x00100016>> jmp .-2 (0x00100016) : EBFE
-02959880421i[CMOS  ] Last time is 1527522542 (Mon May 28 17:49:02 2018)
-02959880421i[XGUI  ] Exit
-02959880421i[      ] restoring default signal behavior
-02959880421i[SIM   ] quit_sim called with exit code 1
+00038284952i[XGUI  ] charmap update. Font Height is 16
+167463260388p[      ] >>PANIC<< SIGNAL 2 caught
+167463260388i[CPU0  ] CPU is in protected mode (active)
+167463260388i[CPU0  ] CS.mode = 32 bit
+167463260388i[CPU0  ] SS.mode = 32 bit
+167463260388i[CPU0  ] EFER   = 0x00000000
+167463260388i[CPU0  ] | EAX=00000000  EBX=00001380  ECX=00108cb9  EDX=00000001
+167463260388i[CPU0  ] | ESP=0011bfe0  EBP=0011bfe8  ESI=000e0200  EDI=00003ff4
+167463260388i[CPU0  ] | IOPL=0 id vip vif ac vm rf nt of df IF tf sf zf af PF cf
+167463260388i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
+167463260388i[CPU0  ] |  CS:0023( 0004| 0|  3) 00000000 ffffffff 1 1
+167463260388i[CPU0  ] |  DS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
+167463260388i[CPU0  ] |  SS:002b( 0005| 0|  3) 00000000 ffffffff 1 1
+167463260388i[CPU0  ] |  ES:002b( 0005| 0|  3) 00000000 ffffffff 1 1
+167463260388i[CPU0  ] |  FS:0000( 0000| 0|  0) 00000000 00000000 0 0
+167463260388i[CPU0  ] |  GS:0000( 0000| 0|  0) 00000000 00000000 0 0
+167463260388i[CPU0  ] | EIP=00100016 (00100016)
+167463260388i[CPU0  ] | CR0=0x80000011 CR2=0x00000000
+167463260388i[CPU0  ] | CR3=0x0002d000 CR4=0x00000000
+167463260388i[CPU0  ] 0x00100016>> jmp .-2 (0x00100016) : EBFE
+167463260388i[CMOS  ] Last time is 1527566116 (Tue May 29 05:55:16 2018)
+167463260388i[XGUI  ] Exit
+167463260388i[      ] restoring default signal behavior
+167463260388i[SIM   ] quit_sim called with exit code 1

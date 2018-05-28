@@ -387,3 +387,38 @@ fin_sem_signal:
 
 fin_sem_destroy:
  ret
+
+.globl sbrk; .type sbrk, @function; .align 0; sbrk:
+
+ pushl %ebp;
+ movl %esp, %ebp;
+
+
+
+ pushl %ebx;
+
+
+
+ movl 8(%ebp), %ebx;
+
+
+
+ movl $19, %eax;
+ int $0x80;
+
+
+
+ popl %ebx;
+ popl %ebp;
+
+
+
+ cmpl $0, %eax;
+ jge fin_sbrk
+    imull $-1, %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+
+fin_sbrk:
+ ret
