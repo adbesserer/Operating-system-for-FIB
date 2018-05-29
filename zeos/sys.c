@@ -74,22 +74,62 @@ void sys_exit()
 
 
 void *sys_sbrk(int increment){
-	int f;
-	task_struct * t = current();
+	int f,i,n;
+	struct task_struct * t = current();
+	page_table_entry * PT = get_PT(t);
+	//caso en el que el heap aun no existe
 	if(t->heap == NULL){
 		if(increment < 0) return -ENOMEM; //potser no es error
 		f = alloc_frame();
 		if(f < 0 ) return -ENOMEM;
-		page_table_entry * PT = get_PT(t);
+
 		set_ss_pag(PT,HEAP_INIT_PAGE, f);
-		t->heap = HEAP_INIT_PAGE;
-		if(increment <= PAGE_SIZE)
-			t->heapSize = increment;
-		return t->heap+t->heapSize;
+		t->heap = HEAP_INIT_PAGE;		//HEAP INIT PAGE ES LA BASE DE LA HEAP PARA TODOS LOS PROCS
+		t->heapPages = 1;
 	}
-	if(increment == 0) return t->heap+t->heapSize;
+	//si inc == 0 devolvemos el pagebreak (direccion limite de nuestro heap)
+	if(increment == 0) return HEAP_INIT_PAGE + t->heapSize;
 
+	//si inc > 0 tenemos que reservar paginas
+	if(increment > 0){
+		if(t->heapSize % PAGE_SIZE + increment <= PAGE_SIZE)	//en este caso no necesitamos paginas nuevas
+			t->heapSize += increment;
+		else{	//reservar las que haga falta
+			t->heapSize += increment;
+			n = (t->heapSize / PAGE_SIZE) - t->heapPages;
+			for(i = 0; i != n; ++i){		//reservar las n paginas
+				f = alloc_frame();
+				if(f<0)	//deallocatar las reservadas hasta ahora
+				{
+					t->heapSize -= increment;
+					while(i > 0){
+						free_frame(get_frame(PT, HEAP_INIT_PAGE + t->heapPages - 1));
+						del_ss_pag(PT, HEAP_INIT_PAGE + t->heapPages);
+						t->heapPages--;
+						--i;
+					}
+					return -ENOMEM;
+				}
+				//se ha conseguido reservar f
+				set_ss_pag(PT,HEAP_INIT_PAGE + t->heapPages, f);
+				++t->heapPages;
+			}
+			return HEAP_INIT_PAGE + t->heapSize;	//direccion del nuevo break;
+		}
+	}
+	if(increment < 0)	//tenemos que deallocatar toda la memoria necesaria
+	{
+		if( t->heapSize + increment <= 0) t -> heapSize = 0;
+		else t->heapSize += increment;
 
+		n = t->heapPages - (t->heapSize/PAGE_SIZE); 		//!!!! REPASAR ESTE MODO DE CALCULAR LAS PAGINAS A LIBERAR QUE TIENE MALA PINTA
+		for(i=0; i != n; ++i){
+			free_frame(get_frame(PT, HEAP_INIT_PAGE + t->heapPages - 1));
+			del_ss_pag(PT, HEAP_INIT_PAGE + t->heapPages);
+			t->heapPages--;
+		}
+		return HEAP_INIT_PAGE + t->heapSize;	//direccion del nuevo break;
+	}
 }
 /* System call 2: Fork */
 int sys_fork()

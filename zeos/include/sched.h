@@ -28,6 +28,7 @@ struct task_struct {
 
   void *heap;
   int heapSize; //BYTES
+  int heapPages;
 };
 
 union task_union {
