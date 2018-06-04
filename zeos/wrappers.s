@@ -403,7 +403,7 @@ fin_sem_destroy:
 
 
 
- movl $19, %eax;
+ movl $12, %eax;
  int $0x80;
 
 

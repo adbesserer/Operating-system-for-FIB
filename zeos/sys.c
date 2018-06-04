@@ -84,15 +84,16 @@ void *sys_sbrk(int increment){
 		if(f < 0 ) return -ENOMEM;
 
 		set_ss_pag(PT,HEAP_INIT_PAGE, f);
-		t->heap = HEAP_INIT_PAGE;		//HEAP INIT PAGE ES LA BASE DE LA HEAP PARA TODOS LOS PROCS
+		t->heap = HEAP_START;		//HEAP INIT PAGE ES LA BASE DE LA HEAP PARA TODOS LOS PROCS
 		t->heapPages = 1;
 	}
+	int * heap_addr = HEAP_START + t->heapSize;
 	//si inc == 0 devolvemos el pagebreak (direccion limite de nuestro heap)
-	if(increment == 0) return HEAP_INIT_PAGE + t->heapSize;
+	if(increment == 0) return heap_addr;
 
 	//si inc > 0 tenemos que reservar paginas
-	if(increment > 0){
-		if(t->heapSize % PAGE_SIZE + increment <= PAGE_SIZE)	//en este caso no necesitamos paginas nuevas
+	else if(increment > 0){
+		if(t->heapSize % PAGE_SIZE + increment < PAGE_SIZE)	//en este caso no necesitamos paginas nuevas
 			t->heapSize += increment;
 		else{	//reservar las que haga falta
 			t->heapSize += increment;
@@ -114,21 +115,25 @@ void *sys_sbrk(int increment){
 				set_ss_pag(PT,HEAP_INIT_PAGE + t->heapPages, f);
 				++t->heapPages;
 			}
-			return HEAP_INIT_PAGE + t->heapSize;	//direccion del nuevo break;
 		}
+		return heap_addr;	//direccion del nuevo break;
 	}
-	if(increment < 0)	//tenemos que deallocatar toda la memoria necesaria
+	else if(increment < 0)	//tenemos que deallocatar toda la memoria necesaria
 	{
 		if( t->heapSize + increment <= 0) t -> heapSize = 0;
 		else t->heapSize += increment;
 
-		n = t->heapPages - (t->heapSize/PAGE_SIZE); 		//!!!! REPASAR ESTE MODO DE CALCULAR LAS PAGINAS A LIBERAR QUE TIENE MALA PINTA
+/* t->heapPages = 2
+ * t->heapSize = 4100
+ * PAGE_SIZE = 4096
+ */
+		n = t->heapPages - ((t->heapSize / PAGE_SIZE)+1); 		//!!!! REPASAR ESTE MODO DE CALCULAR LAS PAGINAS A LIBERAR QUE TIENE MALA PINTA
 		for(i=0; i != n; ++i){
 			free_frame(get_frame(PT, HEAP_INIT_PAGE + t->heapPages - 1));
 			del_ss_pag(PT, HEAP_INIT_PAGE + t->heapPages);
 			t->heapPages--;
 		}
-		return HEAP_INIT_PAGE + t->heapSize;	//direccion del nuevo break;
+		return HEAP_START + t->heapSize;	//direccion del nuevo break;
 	}
 }
 /* System call 2: Fork */
@@ -166,7 +171,7 @@ int sys_fork()
 		
 	// Per cada pagina del segment de dades (NUM_PAG_DATA) mirem d'assignar un frame lliure
 		int pg;
-		for (pg = 0; pg < NUM_PAG_DATA; pg++)
+		for (pg = 0; pg < NUM_PAG_DATA+current()->heapPages; pg++)
 		{
 			int new_pg;
 			new_pg = alloc_frame();
@@ -187,21 +192,21 @@ int sys_fork()
 			}
 			// Else assigna la pagina ss al fill.
 			set_ss_pag(PT_Child, PAG_LOG_INIT_DATA + pg, new_pg);
-		}		
+		}	
 	
 	// - Mapear datos hijo
 	// Demanem la taula de pagines pel parent
 		page_table_entry * PT_Parent = get_PT(current());
 	//	Per cada pagina del segment de systema i codi (NUM_PAG_KERNEL), mapejem a child.
 		for (pg = 0; pg < NUM_PAG_KERNEL; pg++) set_ss_pag(PT_Child, pg, get_frame(PT_Parent, pg));
-		for (pg = 0; pg < NUM_PAG_CODE; pg++) set_ss_pag(PT_Child, PAG_LOG_INIT_CODE + pg, get_frame(PT_Parent, PAG_LOG_INIT_CODE + pg));
+		for (pg = 0; pg < NUM_PAG_CODE; pg++) set_ss_pag(PT_Child, PAG_LOG_INIT_CODE + pg, get_frame(PT_Parent, PAG_LOG_INIT_CODE + pg)); 	
 		
 	// - Copiar datos hijo
-	for (pg = NUM_PAG_KERNEL + NUM_PAG_CODE; pg < NUM_PAG_KERNEL + NUM_PAG_CODE + NUM_PAG_DATA; pg++)
+	for (pg = NUM_PAG_KERNEL + NUM_PAG_CODE; pg < NUM_PAG_KERNEL + NUM_PAG_CODE + NUM_PAG_DATA + current()->heapPages; pg++)
 	{
-    	set_ss_pag(PT_Parent, pg + NUM_PAG_DATA, get_frame(PT_Child, pg));
-    	copy_data((void*) (pg << 12), (void*) ((pg + NUM_PAG_DATA) << 12), PAGE_SIZE);
-    	del_ss_pag(PT_Parent, pg + NUM_PAG_DATA);
+    	set_ss_pag(PT_Parent, pg + NUM_PAG_DATA + current()->heapPages, get_frame(PT_Child, pg));
+    	copy_data((void*) (pg << 12), (void*) ((pg + NUM_PAG_DATA+current()->heapPages) << 12), PAGE_SIZE);
+    	del_ss_pag(PT_Parent, pg + NUM_PAG_DATA + current()->heapPages);
 	}
 	
 	// - Desmapear e invalidar TLB
@@ -233,6 +238,8 @@ int sys_fork()
 	set_quantum(tChild, current()->quantum);
 	init_stats(&tChild->process_stats);
 	tChild->exec_status = ST_READY;
+	tChild->heapSize = current()->heapSize;
+	tChild->heapPages = current()->heapPages;
 	
 	// Encuar el fill a la cua
 	list_add_tail(&(uChild->task.list), &readyqueue);
@@ -310,6 +317,7 @@ int sys_clone(void (*function)(void), void *stack){
 	set_quantum(tChild, current()->quantum);
 	init_stats(&tChild->process_stats);
 	tChild->exec_status = ST_READY;
+	tChild->heapSize = 0;
 	
 	// Encuar el fill a la cua
 	list_add_tail(&(uChild->task.list), &readyqueue);

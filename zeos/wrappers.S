@@ -396,7 +396,7 @@ ENTRY(sbrk)
 	/*recovered parameters*/
 	
 	/* interrupt generation*/
-	movl $19, %eax;
+	movl $12, %eax;
 	int $0x80;
 	/* interrupt generation done */
 	

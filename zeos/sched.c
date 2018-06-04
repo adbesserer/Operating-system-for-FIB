@@ -26,6 +26,7 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 /* Headers prototip */
 void task_switch_asm(union task_union*); // <- Comes from task_switch_asm.S.
 void stack_swap(void * old, void * new);
+void set_pe_flag();
 
 /* Constants */
 #define DEFAULT_QUANTUM 10
@@ -68,20 +69,6 @@ int allocate_DIR(struct task_struct *t)
 	return -ENOMEM;
 }
 
-
-/* Allocation of directory for a task struct.*/
-/*
-int allocate_DIR(struct task_struct *t) 
-{
-	int pos;
-
-	pos = ((int)t-(int)task)/sizeof(union task_union);
-
-	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
-
-	return 1;
-}
-*/
 /* Code of cpu_idle function. */
 void cpu_idle(void)
 {
@@ -133,6 +120,7 @@ void init_idle (void)
 
   	//guardar la nueva posicion del stack como valor inicial del ebp
   	idle_task->kernel_esp = &(uTmp->stack[KERNEL_STACK_SIZE-2]);
+  	idle_task->heapSize = 0;
 	
 }
 
@@ -149,6 +137,7 @@ void init_task1(void)
   	task1->PID = 1;
   	task1->quantum = DEFAULT_QUANTUM;
   	init_stats(&(task1->process_stats));
+  	task1->heapSize = 0;
   	
   	//	2)  Initialize field dir_pages_baseAaddr with  a  new  directory  to  store  the  process  address  space using the allocate_DIR routine.
   	allocate_DIR(task1);
